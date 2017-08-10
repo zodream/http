@@ -1,9 +1,6 @@
 <?php
 namespace Zodream\Http;
 
-use Curl\ArrayUtil;
-use Curl\Decoder;
-
 /**
  * Class Curl
  * @package Zodream\Http
@@ -103,8 +100,7 @@ class Curl {
      * @param  $base_url
      * @throws \ErrorException
      */
-    public function __construct($base_url = null)
-    {
+    public function __construct($base_url = null) {
         if (!extension_loaded('curl')) {
             throw new \ErrorException('cURL library is not loaded');
         }
@@ -146,8 +142,7 @@ class Curl {
      *
      * @return array|string
      */
-    public function buildPostData($data)
-    {
+    public function buildPostData($data) {
         $binary_data = false;
         if (is_array($data)) {
             // Return JSON-encoded string when the request's content-type is JSON.
