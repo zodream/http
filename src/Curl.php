@@ -10,7 +10,7 @@ use Zodream\Helpers\Arr;
  */
 class Curl {
     
-    const VERSION = '7.3.1';
+    const VERSION = '1.0.0';
     const DEFAULT_TIMEOUT = 30;
 
     public $curl;
@@ -48,10 +48,10 @@ class Curl {
     private $headers = array();
     private $options = array();
 
-    private $jsonDecoder = '\Curl\Decoder::decodeJson';
+    private $jsonDecoder = '\Zodream\Helpers\Json::decode';
     private $jsonDecoderArgs = array();
     private $jsonPattern = '/^(?:application|text)\/(?:[a-z]+(?:[\.-][0-9a-z]+){0,}[\+\.]|x-)?json(?:-[a-z]+)?/i';
-    private $xmlDecoder = '\Curl\Decoder::decodeXml';
+    private $xmlDecoder = '\Zodream\Helpers\Xml::decode';
     private $xmlPattern = '~^(?:text/|application/(?:atom\+|rss\+)?)xml~i';
     private $defaultDecoder = null;
 
