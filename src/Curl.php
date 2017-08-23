@@ -1029,6 +1029,9 @@ class Curl {
      * @return $this
      */
     public function setUrl($url, $mixed_data = '') {
+        if (empty($url) && empty($mixed_data)) {
+            return $this;
+        }
         if (!$url instanceof Uri) {
             $url = new Uri($url);
         }
