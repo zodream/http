@@ -6,6 +6,18 @@ class Http {
     const XML = 'xml';
     const JSON = 'json';
 
+    const GET = 'get';
+    const POST = 'post';
+    const DELETE = 'delete';
+    const HEAD = 'head';
+    const PATCH = 'patch';
+    const SEARCH = 'search';
+    const PUT = 'put';
+    const OPTIONS = 'options';
+
+
+
+
     /**
      * @param string|Uri $url
      * @param array $parameters
