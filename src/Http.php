@@ -3,6 +3,7 @@ namespace Zodream\Http;
 
 use Zodream\Disk\File;
 use Zodream\Disk\Stream;
+use Zodream\Domain\Filter\Filters\RequiredFilter;
 use Zodream\Helpers\Json;
 use Zodream\Helpers\Xml;
 
@@ -27,13 +28,52 @@ class Http {
     private $_jsonPattern = '/^(?:application|text)\/(?:[a-z]+(?:[\.-][0-9a-z]+){0,}[\+\.]|x-)?json(?:-[a-z]+)?/i';
     private $_xmlPattern = '~^(?:text/|application/(?:atom\+|rss\+)?)xml~i';
 
-
+    /**
+     * 原始数据
+     * @var array|mixed
+     */
     protected $parameters = [];
     protected $method = self::GET;
     /**
      * @var resource
      */
     protected $curl;
+
+    /**
+     * @var Uri
+     */
+    protected $uri;
+
+    /**
+     * 网址参数地图
+     * @var array
+     */
+    protected $uriMaps = [];
+
+    /**
+     * post 参数地图
+     * @var array
+     */
+    protected $formMaps = [];
+
+    /**
+     * https 是否验证 ssl 证书
+     * @var bool
+     */
+    protected $verifySSL = false;
+
+    /**
+     * 针对post 数据的编码
+     * @var array
+     */
+    protected $encodeFunc = [];
+
+    /**
+     * 解码方法
+     * @var array
+     */
+    protected $decodeFunc = [];
+
     /**
      * @var array 响应头
      */
@@ -57,67 +97,69 @@ class Http {
     /**
      * 设置网址
      * @param string|Uri $url
-     * @param array $parameters
+     * @param array $maps
      * @param bool $verifySSL
      * @return Http
      */
-    public function url($url, $parameters = [], $verifySSL = false) {
-        if (!$url instanceof Uri) {
-            $url = new Uri($url);
-        }
-        $url->addData($parameters);
-        if (!$verifySSL && $url->isSSL()) {
-            $this->setOption(CURLOPT_SSL_VERIFYPEER, FALSE)
-                ->setOption(CURLOPT_SSL_VERIFYHOST, FALSE)
-                ->setOption(CURLOPT_SSLVERSION, 1);
-        }
-        return $this->setOption(CURLOPT_URL, (string)$url);
+    public function url($url, array $maps = [], $verifySSL = false) {
+        $this->uri = !$url instanceof Uri ? new Uri((string)$url) : $url;
+        $this->uriMaps = $maps;
+        $this->verifySSL = $verifySSL;
+        return $this;
     }
 
     /**
      * 根据参数自动转换
-     * @param array $map
+     * @param array $maps
      * @param array $parameters
-     * @return $this
+     * @return Http
      */
-    public function maps(array $map, $parameters = []) {
-        $parameters = array_merge($this->parameters, $parameters);
-        $this->parameters = $this->getData($map, $parameters);
+    public function maps(array $maps, $parameters = []) {
+        // 更改请求方式
+        if ($this->method == self::GET) {
+            $this->method = self::POST;
+        }
+        $this->parameters($parameters);
+        $this->formMaps = $maps;
+        return $this;
+    }
+
+    /**
+     * 追加转换地图
+     * @param array $maps
+     * @return Http
+     */
+    public function appendMaps(array $maps) {
+        $this->formMaps = array_merge($this->formMaps, $maps);
         return $this;
     }
 
     /**
      * 设置参数
      * @param $parameters
-     * @return $this
+     * @return Http
      */
     public function parameters($parameters) {
-        $this->parameters = $parameters;
+        $this->parameters = !is_array($parameters)
+            ? $parameters
+            : array_merge($this->parameters, $parameters);
         return $this;
     }
 
     /**
      * 编码
      * @param string|callable $func
-     * @return $this|Http
+     * @return Http
      */
     public function encode($func = self::JSON) {
-        if (is_callable($func)) {
-            return $this->parameters(call_user_func($func, $this->parameters));
-        }
-        if ($func == self::JSON) {
-            return $this->parameters(Json::encode($this->parameters));
-        }
-        if ($func == self::XML) {
-            return $this->parameters(Xml::encode($this->parameters));
-        }
+        $this->encodeFunc[] = $func;
         return $this;
     }
 
     /**
      * 设置请求方法
      * @param string $method
-     * @return $this
+     * @return Http
      */
     public function method($method = self::GET) {
         $this->method = strtolower($method);
@@ -129,7 +171,7 @@ class Http {
      *
      * @access public
      * @param  $callback
-     * @return $this
+     * @return Http
      */
     public function progress($callback) {
         $this->setOption(CURLOPT_PROGRESSFUNCTION, $callback);
@@ -175,55 +217,97 @@ class Http {
     /**
      * get 方法请求
      * @return mixed|null
+     * @throws \Exception
      */
     public function get() {
         return $this->method()->text();
     }
 
+    /**
+     * @return mixed|null
+     * @throws \Exception
+     */
     public function post() {
         return $this->method(self::POST)->text();
     }
 
+    /**
+     * @return mixed|null
+     * @throws \Exception
+     */
     public function delete() {
         return $this->method(self::DELETE)->text();
     }
 
+    /**
+     * @return mixed|null
+     * @throws \Exception
+     */
     public function patch() {
         return $this->method(self::PATCH)->text();
     }
 
+    /**
+     * @return mixed|null
+     * @throws \Exception
+     */
     public function put() {
         return $this->method(self::PUT)->text();
     }
 
+    /**
+     * @return mixed|null
+     * @throws \Exception
+     */
     public function head() {
         return $this->method(self::HEAD)->text();
     }
 
+    /**
+     * @return mixed|null
+     * @throws \Exception
+     */
     public function options() {
         return $this->method(self::OPTIONS)->text();
     }
 
+    /**
+     * @return mixed|null
+     * @throws \Exception
+     */
     public function search() {
         return $this->method(self::SEARCH)->text();
     }
 
+    /**
+     * @return mixed|null
+     * @throws \Exception
+     */
     public function text() {
         return $this->setCommonOption()->execute();
     }
 
+    /**
+     * @return array|mixed|object
+     * @throws \Exception
+     */
     public function xml() {
-        return Xml::decode($this->text());
+        return $this->decode(self::XML)->text();
     }
 
+    /**
+     * @return mixed
+     * @throws \Exception
+     */
     public function json() {
-        return Json::decode($this->text());
+        return $this->decode(self::JSON)->text();
     }
 
     /**
      * 保存
      * @param $file
      * @return string
+     * @throws \Exception
      */
     public function save($file) {
         if (!$file instanceof Stream) {
@@ -240,6 +324,7 @@ class Http {
     /**
      * 显示
      * @return mixed|null
+     * @throws \Exception
      */
     public function show() {
         return $this->execute();
@@ -248,28 +333,10 @@ class Http {
     /**
      * 解码相应内容
      * @param null $func
-     * @return $this|mixed
+     * @return $this
      */
     public function decode($func = null) {
-        if (is_callable($func)) {
-            return call_user_func($func, $this->text());
-        }
-        if ($func == self::JSON) {
-            return $this->json();
-        }
-        if ($func == self::XML) {
-            return $this->xml();
-        }
-        $text = $this->text();
-        if (!is_null($func)) {
-            return $text;
-        }
-        if (preg_match($this->_jsonPattern, $this->getContentType())) {
-            return Json::decode($text);
-        }
-        if (preg_match($this->_xmlPattern, $this->getContentType())) {
-            return Xml::decode($text);
-        }
+        $this->decodeFunc[] = $func;
         return $this;
     }
 
@@ -295,7 +362,7 @@ class Http {
         if ($this->responseText === false) {
             throw new \Exception($this->responseHeaders['error']);
         }
-        return $this->responseText;
+        return $this->decodeResponse($this->responseText);
     }
 
     /**
@@ -317,6 +384,7 @@ class Http {
     /**
      * GET RESULT
      * @return mixed|null
+     * @throws \Exception
      */
     public function getResponseText() {
         if (is_resource($this->curl)
@@ -340,7 +408,7 @@ class Http {
     /**
      * SET USER AGENT
      * @param string $args
-     * @return Curl
+     * @return Http
      */
     public function setUserAgent($args) {
         return $this->setOption(CURLOPT_USERAGENT, $args);
@@ -445,13 +513,33 @@ class Http {
 
     /**
      * 生成post 提交数据
-     * @return array
+     * @return array|string
      */
     public function buildPostParameters() {
         if (!is_array($this->parameters)) {
             return $this->parameters;
         }
-        $parameters = $this->parameters;
+        if (empty($this->formMaps)) {
+            return '';
+        }
+        $parameters = $this->getParametersByMaps($this->formMaps);
+        foreach ($this->encodeFunc as $func) {
+            if (is_callable($func)) {
+                $parameters = call_user_func($func, $parameters);
+                continue;
+            }
+            if ($func == self::JSON) {
+                $parameters = Json::encode($parameters);
+                continue;
+            }
+            if ($func == self::XML) {
+                $parameters = Xml::encode($parameters);
+                continue;
+            }
+        }
+        if (!is_array($parameters)) {
+            return $parameters;
+        }
         $binary_data = false;
         foreach ($parameters as $key => $value) {
             if (is_string($value) && strpos($value, '@')
@@ -471,9 +559,62 @@ class Http {
     }
 
     /**
+     * 自动解码结果
+     * @param $data
+     * @return array|mixed|object
+     * @throws \Exception
+     */
+    protected function decodeResponse($data) {
+        foreach ($this->decodeFunc as $func) {
+            if (is_callable($func)) {
+                $data = call_user_func($func, $data);
+                continue;
+            }
+            if ($func == self::JSON) {
+                $data = Json::decode($data);
+                continue;
+            }
+            if ($func == self::XML) {
+                $data = Xml::decode($data);
+                continue;
+            }
+            if (!is_null($func)) {
+                continue;
+            }
+            if (preg_match($this->_jsonPattern, $this->getContentType())) {
+                $data = Json::decode($data);
+                continue;
+            }
+            if (preg_match($this->_xmlPattern, $this->getContentType())) {
+                $data = Xml::decode($data);
+                continue;
+            }
+        }
+        return $data;
+    }
+
+    /**
+     * 获取链接
+     * @return Uri
+     */
+    public function getUrl() {
+        if (!empty($this->uriMaps)
+            && is_array($this->parameters)) {
+            $this->uri->addData($this->getParametersByMaps($this->uriMaps));
+        }
+        return $this->uri;
+    }
+
+    /**
      * 应用请求方式
      */
     protected function applyMethod() {
+        if (!$this->verifySSL && $this->uri->isSSL()) {
+            $this->setOption(CURLOPT_SSL_VERIFYPEER, FALSE)
+                ->setOption(CURLOPT_SSL_VERIFYHOST, FALSE)
+                ->setOption(CURLOPT_SSLVERSION, 1);
+        }
+        $this->setOption(CURLOPT_URL, (string)$this->getUrl());
         if ($this->method == self::GET) {
             return;
         }
@@ -497,6 +638,15 @@ class Http {
             ->setOption(CURLOPT_POSTFIELDS, $parameters);
     }
 
+    /**
+     * 根据对应关系做转化
+     * @param array $maps
+     * @return array
+     */
+    public function getParametersByMaps(array $maps) {
+        return $this->getParameters($maps, $this->parameters);
+    }
+
 
     /**
      * 获取值 根据 #区分必须  $key => $value 区分默认值
@@ -505,11 +655,11 @@ class Http {
      * @param array $args
      * @return array
      */
-    protected function getData(array $keys, array $args) {
+    protected function getParameters(array $keys, array $args) {
         $data = array();
         foreach ($keys as $key => $item) {
             $data = array_merge($data,
-                $this->getDataByKey($key, $item, $args));
+                $this->getParametersByKey($key, $item, $args));
         }
         return $data;
     }
@@ -521,9 +671,9 @@ class Http {
      * @param array $args
      * @return array
      */
-    protected function getDataByKey($key, $item, array $args) {
+    protected function getParametersByKey($key, $item, array $args) {
         if (is_array($item)) {
-            $item = $this->chooseData($item, $args);
+            $item = $this->chooseParameters($item, $args);
         }
         if (is_integer($key)) {
             if (is_array($item)) {
@@ -543,7 +693,7 @@ class Http {
         }
         if ($this->isEmpty($item)) {
             if ($need) {
-                throw  new \InvalidArgumentException($keyTemp[0].' IS NEED!');
+                throw new \InvalidArgumentException($keyTemp[0].' IS NEED!');
             }
             return [];
         }
@@ -554,13 +704,26 @@ class Http {
     }
 
     /**
+     * 验证值是否为空
+     * @param $value
+     * @return bool
+     */
+    protected function isEmpty($value) {
+        static $validator;
+        if (empty($validator)) {
+            $validator = new RequiredFilter();
+        }
+        return !$validator->validate($value);
+    }
+
+    /**
      * MANY CHOOSE ONE
      * @param array $item
      * @param array $args
      * @return array
      */
-    protected function chooseData(array $item, array $args) {
-        $data = $this->getData($item, $args);
+    protected function chooseParameters(array $item, array $args) {
+        $data = $this->getParameters($item, $args);
         if (empty($data)) {
             throw new \InvalidArgumentException('ONE OF MANY IS NEED!');
         }
