@@ -51,6 +51,12 @@ class Http {
     protected $uriMaps = [];
 
     /**
+     * 编码
+     * @var mixed
+     */
+    protected $uriEncodeFunc;
+
+    /**
      * post 参数地图
      * @var array
      */
@@ -98,12 +104,16 @@ class Http {
      * 设置网址
      * @param string|Uri $url
      * @param array $maps
+     * @param null $func
      * @param bool $verifySSL
      * @return Http
      */
-    public function url($url, array $maps = [], $verifySSL = false) {
-        $this->uri = !$url instanceof Uri ? new Uri((string)$url) : $url;
+    public function url($url, array $maps = [], $func = null, $verifySSL = false) {
+        if (!empty($url)) {
+            $this->uri = !$url instanceof Uri ? new Uri((string)$url) : $url;
+        }
         $this->uriMaps = $maps;
+        $this->uriEncodeFunc = $func;
         $this->verifySSL = $verifySSL;
         return $this;
     }
@@ -149,9 +159,13 @@ class Http {
     /**
      * 编码
      * @param string|callable $func
+     * @param bool $is_clear 清空原有的d
      * @return Http
      */
-    public function encode($func = self::JSON) {
+    public function encode($func = self::JSON, $is_clear = false) {
+        if ($is_clear) {
+            $this->encodeFunc = [];
+        }
         $this->encodeFunc[] = $func;
         return $this;
     }
@@ -333,9 +347,13 @@ class Http {
     /**
      * 解码相应内容
      * @param null $func
+     * @param bool $is_clear  清空原有的
      * @return $this
      */
-    public function decode($func = null) {
+    public function decode($func = null, $is_clear = false) {
+        if ($is_clear) {
+            $this->decodeFunc = [];
+        }
         $this->decodeFunc[] = $func;
         return $this;
     }
@@ -596,13 +614,36 @@ class Http {
     /**
      * 获取链接
      * @return Uri
+     * @throws \Exception
      */
     public function getUrl() {
         if (!empty($this->uriMaps)
             && is_array($this->parameters)) {
-            $this->uri->addData($this->getParametersByMaps($this->uriMaps));
+            $this->uri->addData($this->getUriParameters());
         }
         return $this->uri;
+    }
+
+    /**
+     * 获取uri参数
+     * @return array|mixed|object
+     * @throws \Exception
+     */
+    public function getUriParameters() {
+        $data = $this->getParametersByMaps($this->uriMaps);
+        if (empty($this->uriEncodeFunc)) {
+            return $data;
+        }
+        if (is_callable($this->uriEncodeFunc)) {
+            return call_user_func($this->uriEncodeFunc, $data);
+        }
+        if ($this->uriEncodeFunc == self::JSON) {
+            return Json::decode($data);
+        }
+        if ($this->uriEncodeFunc == self::XML) {
+            return Xml::decode($data);
+        }
+        return $data;
     }
 
     /**
@@ -644,22 +685,22 @@ class Http {
      * @return array
      */
     public function getParametersByMaps(array $maps) {
-        return $this->getParameters($maps, $this->parameters);
+        return static::getMapParameters($maps, $this->parameters);
     }
 
 
     /**
      * 获取值 根据 #区分必须  $key => $value 区分默认值
      * 支持多选 键必须为 数字， 支持多级 键必须为字符串
-     * @param array $keys
+     * @param array $maps
      * @param array $args
      * @return array
      */
-    protected function getParameters(array $keys, array $args) {
+    public static function getMapParameters(array $maps, array $args) {
         $data = array();
-        foreach ($keys as $key => $item) {
+        foreach ($maps as $key => $item) {
             $data = array_merge($data,
-                $this->getParametersByKey($key, $item, $args));
+                static::getParametersByKey($key, $item, $args));
         }
         return $data;
     }
@@ -671,9 +712,9 @@ class Http {
      * @param array $args
      * @return array
      */
-    protected function getParametersByKey($key, $item, array $args) {
+    protected static function getParametersByKey($key, $item, array $args) {
         if (is_array($item)) {
-            $item = $this->chooseParameters($item, $args);
+            $item = static::chooseParameters($item, $args);
         }
         if (is_integer($key)) {
             if (is_array($item)) {
@@ -691,7 +732,7 @@ class Http {
         if (array_key_exists($keyTemp[0], $args)) {
             $item = $args[$keyTemp[0]];
         }
-        if ($this->isEmpty($item)) {
+        if (static::isEmpty($item)) {
             if ($need) {
                 throw new \InvalidArgumentException($keyTemp[0].' IS NEED!');
             }
@@ -708,7 +749,7 @@ class Http {
      * @param $value
      * @return bool
      */
-    protected function isEmpty($value) {
+    public static function isEmpty($value) {
         static $validator;
         if (empty($validator)) {
             $validator = new RequiredFilter();
@@ -722,8 +763,8 @@ class Http {
      * @param array $args
      * @return array
      */
-    protected function chooseParameters(array $item, array $args) {
-        $data = $this->getParameters($item, $args);
+    protected static function chooseParameters(array $item, array $args) {
+        $data = static::getMapParameters($item, $args);
         if (empty($data)) {
             throw new \InvalidArgumentException('ONE OF MANY IS NEED!');
         }
