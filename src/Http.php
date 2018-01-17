@@ -6,6 +6,7 @@ use Zodream\Disk\Stream;
 use Zodream\Domain\Filter\Filters\RequiredFilter;
 use Zodream\Helpers\Json;
 use Zodream\Helpers\Xml;
+use Exception;
 
 /**
  * Class Http
@@ -532,6 +533,7 @@ class Http {
     /**
      * 生成post 提交数据
      * @return array|string
+     * @throws Exception
      */
     public function buildPostParameters() {
         if (!is_array($this->parameters)) {
@@ -648,6 +650,7 @@ class Http {
 
     /**
      * 应用请求方式
+     * @throws Exception
      */
     protected function applyMethod() {
         if (!$this->verifySSL && $this->uri->isSSL()) {
@@ -683,6 +686,7 @@ class Http {
      * 根据对应关系做转化
      * @param array $maps
      * @return array
+     * @throws Exception
      */
     public function getParametersByMaps(array $maps) {
         return static::getMapParameters($maps, $this->parameters);
@@ -695,6 +699,7 @@ class Http {
      * @param array $maps
      * @param array $args
      * @return array
+     * @throws Exception
      */
     public static function getMapParameters(array $maps, array $args) {
         $data = array();
@@ -711,37 +716,46 @@ class Http {
      * @param $item
      * @param array $args
      * @return array
+     * @throws Exception
      */
     protected static function getParametersByKey($key, $item, array $args) {
-        if (is_array($item)) {
-            $item = static::chooseParameters($item, $args);
+        if (is_array($item) && is_integer($key)) {
+            // 多选多
+            return static::chooseParameters($item, $args);
         }
         if (is_integer($key)) {
-            if (is_array($item)) {
-                return $item;
-            }
-            $key = $item;
-            $item = null;
+            list($key, $item) = [$item, null];
         }
         $need = false;
         if (strpos($key, '#') === 0) {
             $key = substr($key, 1);
             $need = true;
         }
-        $keyTemp = explode(':', $key, 2);
-        if (array_key_exists($keyTemp[0], $args)) {
-            $item = $args[$keyTemp[0]];
+        $oldKey = $key;
+        if (strpos($key, ':') > 0) {
+            // 更改键 新:旧
+            list($key, $oldKey) = explode(':', $key, 2);
         }
-        if (static::isEmpty($item)) {
-            if ($need) {
-                throw new \InvalidArgumentException($keyTemp[0].' IS NEED!');
+        if (isset($args[$oldKey]) && !static::isEmpty($args[$oldKey])) {
+            // 只要存在值就马上返回 不进行后面的推算
+            return [$key => $args[$oldKey]];
+        }
+        if (is_array($item)) {
+            // 不进行里面的报错
+            try {
+                $item = static::getMapParameters($item, $args);
+            } catch (Exception $ex) {
+                $item = null;
             }
-            return [];
         }
-        if (count($keyTemp) > 1) {
-            $key = $keyTemp[1];
+        if (!static::isEmpty($item)) {
+            return [$key => $item];
         }
-        return [$key => $item];
+        if ($need) {
+            throw new Exception($key.' IS NEED!');
+        }
+        return [];
+
     }
 
     /**
@@ -762,11 +776,12 @@ class Http {
      * @param array $item
      * @param array $args
      * @return array
+     * @throws Exception
      */
     protected static function chooseParameters(array $item, array $args) {
         $data = static::getMapParameters($item, $args);
         if (empty($data)) {
-            throw new \InvalidArgumentException('ONE OF MANY IS NEED!');
+            throw new Exception('ONE OF MANY IS NEED!');
         }
         return $data;
     }
