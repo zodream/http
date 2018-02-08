@@ -3,11 +3,11 @@ namespace Zodream\Http;
 
 use Zodream\Disk\File;
 use Zodream\Disk\Stream;
-use Zodream\Domain\Filter\Filters\RequiredFilter;
 use Zodream\Helpers\Json;
 use Zodream\Helpers\Xml;
 use Zodream\Service\Factory;
 use Exception;
+use Zodream\Validate\Validator;
 
 /**
  * Class Http
@@ -767,11 +767,7 @@ class Http {
      * @return bool
      */
     public static function isEmpty($value) {
-        static $validator;
-        if (empty($validator)) {
-            $validator = new RequiredFilter();
-        }
-        return !$validator->validate($value);
+        return !Validator::required()->validate($value);
     }
 
     /**
