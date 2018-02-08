@@ -6,6 +6,7 @@ use Zodream\Disk\Stream;
 use Zodream\Domain\Filter\Filters\RequiredFilter;
 use Zodream\Helpers\Json;
 use Zodream\Helpers\Xml;
+use Zodream\Service\Factory;
 use Exception;
 
 /**
@@ -307,7 +308,7 @@ class Http {
      * @throws \Exception
      */
     public function xml() {
-        return $this->decode(self::XML)->text();
+        return $this->decode(self::XML, true)->text();
     }
 
     /**
@@ -315,7 +316,7 @@ class Http {
      * @throws \Exception
      */
     public function json() {
-        return $this->decode(self::JSON)->text();
+        return $this->decode(self::JSON, true)->text();
     }
 
     /**
@@ -375,6 +376,7 @@ class Http {
     public function execute() {
         $this->applyMethod();
         $this->responseText = curl_exec($this->curl);
+        Factory::log()->info('HTTP RESPONSE: '.$this->responseText);
         $this->responseHeaders = curl_getinfo($this->curl);
         $this->responseHeaders['error'] = curl_error($this->curl);
         $this->responseHeaders['errorNo'] = curl_errno($this->curl);
@@ -623,6 +625,7 @@ class Http {
             && is_array($this->parameters)) {
             $this->uri->addData($this->getUriParameters());
         }
+        Factory::log()->info('HTTP URL: '.(string)$this->uri);
         return $this->uri;
     }
 
