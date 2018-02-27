@@ -376,7 +376,7 @@ class Http {
     public function execute() {
         $this->applyMethod();
         $this->responseText = curl_exec($this->curl);
-        Factory::log()->info('HTTP RESPONSE: '.$this->responseText);
+        self::log('HTTP RESPONSE: '.$this->responseText);
         $this->responseHeaders = curl_getinfo($this->curl);
         $this->responseHeaders['error'] = curl_error($this->curl);
         $this->responseHeaders['errorNo'] = curl_errno($this->curl);
@@ -625,7 +625,7 @@ class Http {
             && is_array($this->parameters)) {
             $this->uri->addData($this->getUriParameters());
         }
-        Factory::log()->info('HTTP URL: '.(string)$this->uri);
+        self::log('HTTP URL: '.(string)$this->uri);
         return $this->uri;
     }
 
@@ -783,6 +783,13 @@ class Http {
             throw new Exception('ONE OF MANY IS NEED!');
         }
         return $data;
+    }
+
+    protected static function log($message) {
+        if (!defined('DEBUG') || !DEBUG) {
+            return;
+        }
+        Factory::log()->info($message);
     }
 
 }
