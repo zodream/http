@@ -643,10 +643,10 @@ class Http {
             return call_user_func($this->uriEncodeFunc, $data);
         }
         if ($this->uriEncodeFunc == self::JSON) {
-            return Json::decode($data);
+            return Json::encode($data);
         }
         if ($this->uriEncodeFunc == self::XML) {
-            return Xml::decode($data);
+            return Xml::encode($data);
         }
         return $data;
     }
@@ -676,6 +676,7 @@ class Http {
             return;
         }
         $parameters = $this->buildPostParameters();
+        self::log('HTTP DATA: '.var_export($parameters, true));
         if ($this->method == self::POST) {
             $this->setOption(CURLOPT_POST, true)
                 ->setOption(CURLOPT_POSTFIELDS, $parameters);
