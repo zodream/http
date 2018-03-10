@@ -730,6 +730,10 @@ class Http {
         if (is_integer($key)) {
             list($key, $item) = [$item, null];
         }
+        if (isset($args[$key])) {
+            // 增加含特殊标记的键判断
+            return [$key, $args[$key]];
+        }
         $need = false;
         if (strpos($key, '#') === 0) {
             $key = substr($key, 1);
