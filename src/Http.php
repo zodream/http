@@ -732,7 +732,7 @@ class Http {
         }
         if (isset($args[$key])) {
             // 增加含特殊标记的键判断
-            return [$key, $args[$key]];
+            return [$key => $args[$key]];
         }
         $need = false;
         if (strpos($key, '#') === 0) {
