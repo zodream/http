@@ -89,7 +89,7 @@ class Socket {
 	 * @param string $content
 	 */
 	public function write($content) {
-		 socket_write($this->socket, $content);
+	    socket_write($this->socket, $content);
         return $this;
 	}
 		
