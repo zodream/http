@@ -427,6 +427,26 @@ class Http {
     }
 
     /**
+     * 设置代理
+     * @param string $host
+     * @param string $port
+     * @param string $user
+     * @param string $pwd
+     * @return $this|Http
+     */
+    public function setProxy($host, $port = null, $user = null, $pwd = null) {
+        $this->setOption(CURLOPT_PROXY, $host);
+        if (!empty($port)) {
+            $this->setOption(CURLOPT_PROXYPORT, $port);
+        }
+        if (empty($user)) {
+            return $this->setOption(CURLOPT_PROXYAUTH, CURLAUTH_BASIC);
+        }
+        return $this->setOption(CURLOPT_PROXYAUTH, CURLAUTH_ANY)
+            ->setOption(CURLOPT_PROXYUSERPWD, sprintf('%s:%s', $user, $pwd));
+    }
+
+    /**
      * SET USER AGENT
      * @param string $args
      * @return Http
