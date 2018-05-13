@@ -387,6 +387,17 @@ class Http {
     }
 
     /**
+     * @param null $key
+     * @return array| string
+     */
+    public function getResponseHeader($key = null) {
+        if (empty($key)) {
+            return $this->responseHeaders;
+        }
+        return isset($this->responseHeaders[$key]) ? $this->responseHeaders[$key] : null;
+    }
+
+    /**
      * GET STATUS
      * @return mixed
      */
@@ -415,15 +426,19 @@ class Http {
         return $this->responseText;
     }
 
+    public function setHeaderOption($hasHeader = false) {
+        return $this->setOption(CURLOPT_HEADER, $hasHeader);   // 是否输出包含头部
+    }
+
     /**
      * SET COMMON OPTION
      * @return $this
      */
     public function setCommonOption() {
-        return $this->setOption(CURLOPT_HEADER, 0)   // 是否输出包含头部
-        ->setOption(CURLOPT_RETURNTRANSFER, 1) // 返回不直接输出
-        ->setOption(CURLOPT_FOLLOWLOCATION, 1)  // 允许重定向
-        ->setOption(CURLOPT_AUTOREFERER, 1);  // 自动设置 referrer
+        return $this->setHeaderOption()
+            ->setOption(CURLOPT_RETURNTRANSFER, 1) // 返回不直接输出
+            ->setOption(CURLOPT_FOLLOWLOCATION, 1)  // 允许重定向
+            ->setOption(CURLOPT_AUTOREFERER, 1);  // 自动设置 referrer
     }
 
     /**
