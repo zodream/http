@@ -131,6 +131,11 @@ class Uri {
         return $this;
     }
 
+    public function addPath($path) {
+        $this->path = rtrim($this->path, '/').'/'.ltrim($path, '/');
+        return $this;
+    }
+
     /**
      * @return string
      */
