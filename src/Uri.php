@@ -123,6 +123,7 @@ class Uri {
     }
 
     /**
+     *
      * @param string $arg
      * @return $this
      */
@@ -131,9 +132,47 @@ class Uri {
         return $this;
     }
 
+    /**
+     * 追加路径，请注意清除原有查询
+     * @param $path
+     * @return Uri
+     */
     public function addPath($path) {
-        $this->path = rtrim($this->path, '/').'/'.ltrim($path, '/');
-        return $this;
+        $src = parse_url($path);
+        if(isset($src['scheme']) || isset($src['host'])) {
+            return $this->decode($path);
+        }
+        if (isset($src['query'])) {
+            $this->setData($src['query']);
+        }
+        if (substr($src['path'], 0, 1) == '/') {
+            return $this->setPath($src['path']);
+        }
+        $path = dirname($this->path).'/'.$src['path'];
+        $rst = array();
+        $path_array = explode('/', $path);
+        if(!$path_array[0]) {
+            $rst[] = '';
+        }
+        foreach ($path_array AS $key => $dir) {
+            if ($dir == '..') {
+                if (end($rst) == '..') {
+                    $rst[] = '..';
+                    continue;
+                }
+                if(!array_pop($rst)) {
+                    $rst[] = '..';
+                }
+                continue;
+            }
+            if($dir && $dir != '.') {
+                $rst[] = $dir;
+            }
+        }
+        if (!end($path_array)) {
+            $rst[] = '';
+        }
+        return $this->setPath(str_replace('\\', '/', implode('/', $rst)));
     }
 
     /**
@@ -149,12 +188,9 @@ class Uri {
      * @return $this
      */
     public function setData($arg) {
-        if (empty($arg)) {
-            return $this;
-        }
         if (is_string($arg)) {
             $str = str_replace('&amp;', '&', $arg);
-            $arg = array();
+            $arg = [];
             parse_str($str, $arg);
         }
         $this->data = $arg;
@@ -322,5 +358,4 @@ class Uri {
     public function __toString() {
         return $this->encode();
     }
-
 }
