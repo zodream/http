@@ -567,12 +567,7 @@ class Http {
         }
     }
 
-    /**
-     * 生成post 提交数据
-     * @return array|string
-     * @throws Exception
-     */
-    public function buildPostParameters() {
+    public function getPostSource() {
         if (!is_array($this->parameters)) {
             return $this->parameters;
         }
@@ -594,6 +589,16 @@ class Http {
                 continue;
             }
         }
+        return $parameters;
+    }
+
+    /**
+     * 生成post 提交数据
+     * @return array|string
+     * @throws Exception
+     */
+    public function buildPostParameters() {
+        $parameters = $this->getPostSource();
         if (!is_array($parameters)) {
             return $parameters;
         }
