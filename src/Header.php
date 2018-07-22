@@ -357,7 +357,7 @@ class Header extends ZObject implements IteratorAggregate {
      * @return Header
      */
     public function setContentDisposition($filename) {
-        if (strpos(Request::server('HTTP_USER_AGENT'), 'MSIE') !== false) {     //如果是IE浏览器
+        if (strpos(app('request')->server('HTTP_USER_AGENT'), 'MSIE') !== false) {     //如果是IE浏览器
             $filename = preg_replace('/\./', '%2e', $filename, substr_count($filename, '.') - 1);
         }
         return $this->set('Content-Disposition', 'attachment; filename="'.$filename.'"');
