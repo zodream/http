@@ -60,7 +60,7 @@ class Cookie {
         }
 
         $this->name = $name;
-        $this->value = $value;
+        $this->value = $value.'';
         $this->domain = $domain;
         $this->expire = $expire;
         $this->path = empty($path) ? '/' : $path;
