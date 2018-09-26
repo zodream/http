@@ -355,6 +355,7 @@ class Header extends ZObject implements IteratorAggregate {
      * 下载文件的文件名
      * @param string $filename
      * @return Header
+     * @throws \Exception
      */
     public function setContentDisposition($filename) {
         if (strpos(app('request')->server('HTTP_USER_AGENT'), 'MSIE') !== false) {     //如果是IE浏览器
@@ -388,6 +389,33 @@ class Header extends ZObject implements IteratorAggregate {
      */
     public function setTransferEncoding($encoding = 'chunked') {
         return $this->set('Transfer-Encoding', $encoding);
+    }
+
+    /**
+     * HTTP2 server push
+     * @param $url
+     * @param $as
+     * @param null $type
+     * @param bool $crossorigin
+     * @param bool $nopush
+     * @return Header
+     */
+    public function setLink($url, $as, $type = null, $crossorigin = false, $nopush = false) {
+        $args = [
+            sprintf('<%s>', $url),
+            'rel=preload',
+            'as='.$as
+        ];
+        if (!empty($type)) {
+            $args[] = 'type='.$type;
+        }
+        if ($crossorigin) {
+            $args[] = 'crossorigin';
+        }
+        if ($nopush) {
+            $args[] = 'nopush';
+        }
+        return $this->set('Link', implode('; ', $args));
     }
 
     /**
