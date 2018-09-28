@@ -91,6 +91,8 @@ class Http {
      */
     protected $responseText;
 
+    protected $isMulti = false;
+
     /**
      * Http constructor.
      * @param null $url
@@ -374,9 +376,30 @@ class Http {
      * @throws \Exception
      */
     public function execute() {
+        if ($this->isMulti) {
+            return;
+        }
         $this->applyMethod();
         $this->responseText = curl_exec($this->curl);
         self::log('HTTP RESPONSE: '.$this->responseText);
+        return $this->parseResponse();
+    }
+
+    /**
+     * @return array|mixed|object
+     * @throws Exception
+     */
+    public function executeWithBatch() {
+        $this->responseText = HttpBatch::getHttpContent($this->curl);
+        self::log('HTTP RESPONSE: '.$this->responseText);
+        return $this->parseResponse();
+    }
+
+    /**
+     * @return array|mixed|object
+     * @throws Exception
+     */
+    protected function parseResponse() {
         $this->responseHeaders = curl_getinfo($this->curl);
         $this->responseHeaders['error'] = curl_error($this->curl);
         $this->responseHeaders['errorNo'] = curl_errno($this->curl);
@@ -414,6 +437,13 @@ class Http {
     }
 
     /**
+     * @return resource
+     */
+    public function getHandle() {
+        return $this->curl;
+    }
+
+    /**
      * GET RESULT
      * @return mixed|null
      * @throws \Exception
@@ -428,6 +458,15 @@ class Http {
 
     public function setHeaderOption($hasHeader = false) {
         return $this->setOption(CURLOPT_HEADER, $hasHeader);   // 是否输出包含头部
+    }
+
+    /**
+     * @param bool $isMulti
+     * @return Http
+     */
+    public function setIsMulti(bool $isMulti = true) {
+        $this->isMulti = $isMulti;
+        return $this;
     }
 
     /**
@@ -695,7 +734,7 @@ class Http {
      * 应用请求方式
      * @throws Exception
      */
-    protected function applyMethod() {
+    public function applyMethod() {
         if (!$this->verifySSL && $this->uri->isSSL()) {
             $this->setOption(CURLOPT_SSL_VERIFYPEER, FALSE)
                 ->setOption(CURLOPT_SSL_VERIFYHOST, FALSE)
@@ -836,5 +875,7 @@ class Http {
         }
         Factory::log()->info($message);
     }
+
+
 
 }
