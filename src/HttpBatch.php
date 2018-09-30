@@ -106,6 +106,25 @@ class HttpBatch {
         return $success;
     }
 
+    /**
+     * 返回处理过的数组
+     * @param callable $cb
+     * @return array
+     */
+    public function map(callable $cb) {
+        return array_map($cb, $this->https);
+    }
+
+    /**
+     * 循环获取
+     * @param callable $cb
+     * @return $this
+     */
+    public function each(callable $cb) {
+        array_map($cb, $this->https);
+        return $this;
+    }
+
     public function __destruct() {
         curl_multi_close($this->handle);
     }
