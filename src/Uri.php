@@ -291,6 +291,35 @@ class Uri {
         if (isset($args['scheme'])) {
             $this->scheme = $args['scheme'];
         }
+        if (isset($args['host'])) {
+            $this->host = $args['host'];
+        }
+        if (isset($args['port'])) {
+            $this->port = $args['port'];
+        }
+        if (isset($args['user'])) {
+            $this->username = $args['user'];
+        }
+        if (isset($args['pass'])) {
+            $this->password = $args['pass'];
+        }
+        if (isset($args['path'])) {
+            $this->path = $args['path'];
+        }
+        if (isset($args['query'])) {
+            $this->addData($args['query']);
+        }
+        if (isset($args['fragment'])) {
+            $this->fragment = $args['fragment'];
+        }
+        return $this;
+    }
+
+    public function merge($url) {
+        $args = parse_url($url);
+        if (isset($args['scheme'])) {
+            $this->scheme = $args['scheme'];
+        }
 
         if (isset($args['host'])) {
             $this->host = $args['host'];
@@ -309,7 +338,7 @@ class Uri {
         }
 
         if (isset($args['path'])) {
-            $this->path = $args['path'];
+            $this->addPath($args['path']);
         }
 
         if (isset($args['query'])) {
