@@ -287,67 +287,12 @@ class Uri {
      * @return $this
      */
     public function decode($url) {
-        $args = parse_url($url);
-        if (isset($args['scheme'])) {
-            $this->scheme = $args['scheme'];
-        }
-        if (isset($args['host'])) {
-            $this->host = $args['host'];
-        }
-        if (isset($args['port'])) {
-            $this->port = $args['port'];
-        }
-        if (isset($args['user'])) {
-            $this->username = $args['user'];
-        }
-        if (isset($args['pass'])) {
-            $this->password = $args['pass'];
-        }
-        if (isset($args['path'])) {
-            $this->path = $args['path'];
-        }
-        if (isset($args['query'])) {
-            $this->addData($args['query']);
-        }
-        if (isset($args['fragment'])) {
-            $this->fragment = $args['fragment'];
-        }
+        $this->decodeUrl($url, false);
         return $this;
     }
 
     public function merge($url) {
-        $args = parse_url($url);
-        if (isset($args['scheme'])) {
-            $this->scheme = $args['scheme'];
-        }
-
-        if (isset($args['host'])) {
-            $this->host = $args['host'];
-        }
-
-        if (isset($args['port'])) {
-            $this->port = $args['port'];
-        }
-
-        if (isset($args['user'])) {
-            $this->username = $args['user'];
-        }
-
-        if (isset($args['pass'])) {
-            $this->password = $args['pass'];
-        }
-
-        if (isset($args['path'])) {
-            $this->addPath($args['path']);
-        }
-
-        if (isset($args['query'])) {
-            $this->setData($args['query']);
-        }
-
-        if (isset($args['fragment'])) {
-            $this->fragment = $args['fragment'];
-        }
+        $this->decodeUrl($url, true);
         return $this;
     }
 
@@ -386,5 +331,52 @@ class Uri {
 
     public function __toString() {
         return $this->encode();
+    }
+
+    /**
+     * @param $url
+     * @param bool $isAppend
+     */
+    protected function decodeUrl($url, $isAppend = false) {
+        $args = parse_url($url);
+        if (isset($args['scheme'])) {
+            $this->scheme = $args['scheme'];
+        }
+
+        if (isset($args['host'])) {
+            $this->host = $args['host'];
+        }
+
+        if (isset($args['port'])) {
+            $this->port = $args['port'];
+        }
+
+        if (isset($args['user'])) {
+            $this->username = $args['user'];
+        }
+
+        if (isset($args['pass'])) {
+            $this->password = $args['pass'];
+        }
+        if (isset($args['fragment'])) {
+            $this->fragment = $args['fragment'];
+        }
+        if ($isAppend) {
+            if (isset($args['path'])) {
+                $this->addPath($args['path']);
+            }
+            if (isset($args['query']) && !empty($args['query'])) {
+                parse_str($args['query'], $data);
+                $this->addData($data);
+            }
+            return;
+        }
+        if (isset($args['path'])) {
+            $this->path = $args['path'];
+        }
+        if (isset($args['query']) && !empty($args['query'])) {
+            parse_str($args['query'], $data);
+            $this->setData($data);
+        }
     }
 }
