@@ -175,7 +175,7 @@ class Header extends ZObject implements IteratorAggregate {
     }
 
     public function get($key, $default = null, $first = true) {
-        $key = str_replace('_', '-', strtolower($key));
+        $key = $this->filterKey($key);
 
         if (!array_key_exists($key, $this->headers)) {
             if (null === $default) {
@@ -193,7 +193,7 @@ class Header extends ZObject implements IteratorAggregate {
     }
 
     public function set($key, $values, $replace = true) {
-        $key = str_replace('_', '-', strtolower($key));
+        $key = $this->filterKey($key);
 
         $values = array_values((array) $values);
 
@@ -207,6 +207,11 @@ class Header extends ZObject implements IteratorAggregate {
             $this->cacheControl = $this->parseCacheControl($values[0]);
         }
         return $this;
+    }
+
+    protected function filterKey($key) {
+        $key = str_replace(['_', '-'], [' ', ' '], strtolower($key));
+        return str_replace(' ', '-', ucwords($key));
     }
 
     public function has($key) {
@@ -389,6 +394,30 @@ class Header extends ZObject implements IteratorAggregate {
      */
     public function setTransferEncoding($encoding = 'chunked') {
         return $this->set('Transfer-Encoding', $encoding);
+    }
+
+    /**
+     * ajax 跨域响应，默认允许跨域
+     * @param string $allowedOrigins
+     * @param string $allowedMethods
+     * @param string $allowedHeaders
+     * @param int $maxAge
+     * @param bool $supportsCredentials
+     * @return Header
+     */
+    public function setCORS(
+        $allowedOrigins = '*',
+        $allowedMethods = '*',
+        $allowedHeaders = 'Content-Type, X-Requested-With',
+        $maxAge = 0,
+        $supportsCredentials = false) {
+        return $this->add([
+            'Access-Control-Allow-Origin' => $allowedOrigins,
+            'Access-Control-Allow-Credentials' => $supportsCredentials,
+            'Access-Control-Allow-Methods' => $allowedMethods,
+            'Access-Control-Max-Age' => $maxAge,
+            'Access-Control-Allow-Headers' => $allowedHeaders
+        ]);
     }
 
     /**
