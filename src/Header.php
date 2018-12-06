@@ -408,7 +408,7 @@ class Header extends ZObject implements IteratorAggregate {
     public function setCORS(
         $allowedOrigins = '*',
         $allowedMethods = '*',
-        $allowedHeaders = 'Authorization, Content-Type, X-Requested-With',
+        $allowedHeaders = '*',//'Authorization, Content-Type, X-Requested-With',
         $maxAge = 0,
         $supportsCredentials = false) {
         return $this->add([
