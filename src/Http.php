@@ -3,6 +3,7 @@ namespace Zodream\Http;
 
 use Zodream\Disk\File;
 use Zodream\Disk\Stream;
+use Zodream\Helpers\Arr;
 use Zodream\Helpers\Json;
 use Zodream\Helpers\Xml;
 use Zodream\Service\Factory;
@@ -154,6 +155,9 @@ class Http {
      * @return Http
      */
     public function parameters($parameters) {
+        if (empty($parameters)) {
+            return $this;
+        }
         $this->parameters = !is_array($parameters)
             ? $parameters
             : array_merge($this->parameters, $parameters);
@@ -613,7 +617,9 @@ class Http {
         if (empty($this->formMaps)) {
             return '';
         }
-        $parameters = $this->getParametersByMaps($this->formMaps);
+        $parameters = empty($this->parameters) && !Arr::isAssoc($this->formMaps)
+            ? $this->formMaps
+            : $this->getParametersByMaps($this->formMaps);
         foreach ($this->encodeFunc as $func) {
             if (is_callable($func)) {
                 $parameters = call_user_func($func, $parameters);
