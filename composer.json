@@ -15,8 +15,7 @@
     "require": {
         "php": ">=5.6.0",
         "zodream/disk" : "*",
-        "zodream/validate" : "*",
-        "zodream/zodream" : "*"
+        "zodream/validate" : "*"
     },
     "autoload": {
         "psr-4": {

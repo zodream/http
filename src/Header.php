@@ -10,10 +10,8 @@ namespace Zodream\Http;
 use Traversable;
 use IteratorAggregate;
 use ArrayIterator;
-use Zodream\Infrastructure\Base\ZObject;
-use Zodream\Infrastructure\Http\Request;
 
-class Header extends ZObject implements IteratorAggregate {
+class Header implements IteratorAggregate {
 
     const COOKIES_ARRAY = 'array';
 

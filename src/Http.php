@@ -6,7 +6,6 @@ use Zodream\Disk\Stream;
 use Zodream\Helpers\Arr;
 use Zodream\Helpers\Json;
 use Zodream\Helpers\Xml;
-use Zodream\Service\Factory;
 use Exception;
 use Zodream\Validate\Validator;
 
@@ -879,7 +878,10 @@ class Http {
         if (!defined('DEBUG') || !DEBUG) {
             return;
         }
-        Factory::log()->info($message);
+        if (!function_exists('logger')) {
+            return;
+        }
+        logger($message);
     }
 
 
