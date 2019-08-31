@@ -874,7 +874,11 @@ class Http {
         return $data;
     }
 
-    protected static function log($message) {
+    /**
+     * 输出DEBUG信息
+     * @param $message
+     */
+    public static function log($message) {
         if (!defined('DEBUG') || !DEBUG) {
             return;
         }
