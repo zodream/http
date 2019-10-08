@@ -442,7 +442,7 @@ class Header implements IteratorAggregate {
         if ($nopush) {
             $args[] = 'nopush';
         }
-        return $this->set('Link', implode('; ', $args));
+        return $this->set('Link', implode('; ', $args), false);
     }
 
     /**
