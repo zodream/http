@@ -875,6 +875,22 @@ class Http {
     }
 
     /**
+     * 尝试gzip解码
+     * @param $res
+     * @return false|string
+     */
+    public static function tryGzipDecode($res) {
+        if (empty($res) || strlen($res) < 2) {
+            return $res;
+        }
+        $prefix = dechex(ord(substr($res, 0, 1))). dechex(ord(substr($res, 1, 1)));
+        if ('1f8b' === strtolower($prefix)) {
+            return gzdecode($res);
+        }
+        return $res;
+    }
+
+    /**
      * 输出DEBUG信息
      * @param $message
      */
