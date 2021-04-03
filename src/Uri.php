@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Zodream\Http;
 /**
  * Created by PhpStorm.
@@ -9,23 +10,23 @@ namespace Zodream\Http;
 
 class Uri {
 
-    protected $scheme = 'http';
+    protected string $scheme = 'http';
 
-    protected $host;
+    protected string $host = '';
 
-    protected $port = 80;
+    protected int $port = 80;
 
-    protected $username;
+    protected string $username = '';
 
-    protected $password;
+    protected string $password = '';
 
-    protected $path = null;
+    protected string $path = '';
 
-    protected $data = array();
+    protected array $data = [];
 
-    protected $fragment;
+    protected string $fragment = '';
 
-    public function __construct($url = null) {
+    public function __construct(string $url = '') {
         if (!empty($url)) {
             $this->decode($url);
         }
@@ -35,7 +36,7 @@ class Uri {
      * @param string $arg
      * @return $this
      */
-    public function setScheme($arg) {
+    public function setScheme(string $arg) {
         $this->scheme = $arg;
         return $this;
     }
@@ -43,22 +44,23 @@ class Uri {
     /**
      * @return string
      */
-    public function getScheme() {
+    public function getScheme(): string
+    {
         return $this->scheme;
     }
 
     /**
      * @return bool
      */
-    public function isSSL() {
-        return 'https' == $this->scheme;
+    public function isSSL(): bool {
+        return 'https' === $this->scheme;
     }
 
     /**
      * @param string $arg
      * @return $this
      */
-    public function setHost($arg) {
+    public function setHost(string $arg) {
         $args = explode(':', $arg);
         $this->host = $args[0];
         if (count($args) > 1) {
@@ -70,7 +72,8 @@ class Uri {
     /**
      * @return string
      */
-    public function getHost() {
+    public function getHost(): string
+    {
         return $this->host;
     }
 
@@ -86,7 +89,8 @@ class Uri {
     /**
      * @return int
      */
-    public function getPort() {
+    public function getPort(): int
+    {
         return $this->port;
     }
 
@@ -94,7 +98,7 @@ class Uri {
      * @param string $arg
      * @return $this
      */
-    public function setUsername($arg) {
+    public function setUsername(string $arg) {
         $this->username = $arg;
         return $this;
     }
@@ -102,7 +106,8 @@ class Uri {
     /**
      * @return string
      */
-    public function getUsername() {
+    public function getUsername(): string
+    {
         return $this->username;
     }
 
@@ -110,7 +115,7 @@ class Uri {
      * @param string $arg
      * @return $this
      */
-    public function setPassword($arg) {
+    public function setPassword(string $arg) {
         $this->password = $arg;
         return $this;
     }
@@ -118,7 +123,8 @@ class Uri {
     /**
      * @return string
      */
-    public function getPassword() {
+    public function getPassword(): string
+    {
         return $this->password;
     }
 
@@ -127,7 +133,7 @@ class Uri {
      * @param string $arg
      * @return $this
      */
-    public function setPath($arg) {
+    public function setPath(string $arg) {
         $this->path = $arg;
         return $this;
     }
@@ -137,7 +143,7 @@ class Uri {
      * @param $path
      * @return Uri
      */
-    public function addPath($path) {
+    public function addPath(string $path) {
         $src = parse_url($path);
         if(isset($src['scheme']) || isset($src['host'])) {
             return $this->decode($path);
@@ -178,7 +184,8 @@ class Uri {
     /**
      * @return string
      */
-    public function getPath() {
+    public function getPath(): string
+    {
         return $this->path;
     }
 
@@ -187,7 +194,7 @@ class Uri {
      * @param string|array $arg
      * @return $this
      */
-    public function setData($arg) {
+    public function setData(array|string $arg) {
         if (is_string($arg)) {
             $str = str_replace('&amp;', '&', $arg);
             $arg = [];
@@ -203,7 +210,7 @@ class Uri {
      * @param string $value
      * @return $this
      */
-    public function addData($key, $value = null) {
+    public function addData(string|array $key, $value = null) {
         if (empty($key)) {
             return $this;
         }
@@ -286,12 +293,12 @@ class Uri {
      * @param $url
      * @return $this
      */
-    public function decode($url) {
+    public function decode(string $url) {
         $this->decodeUrl($url, false);
         return $this;
     }
 
-    public function merge($url) {
+    public function merge(string $url) {
         $this->decodeUrl($url, true);
         return $this;
     }
@@ -337,7 +344,7 @@ class Uri {
      * @param $url
      * @param bool $isAppend
      */
-    protected function decodeUrl($url, $isAppend = false) {
+    protected function decodeUrl(string $url, bool $isAppend = false) {
         $args = parse_url($url);
         if (isset($args['scheme'])) {
             $this->scheme = $args['scheme'];
