@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Zodream\Http;
 
 /**
@@ -17,15 +18,15 @@ class Header implements IteratorAggregate {
 
     const COOKIES_FLAT = 'flat';
 
-    protected $headers = array();
+    protected array $headers = array();
     
-    protected $cacheControl = array();
+    protected array $cacheControl = array();
 
-    protected $cookies = array();
+    protected array $cookies = array();
     /**
      * @var array
      */
-    protected $headerNames = array();
+    protected array $headerNames = array();
     
     public function __construct() {
         if (!isset($this->headers['cache-control'])) {
@@ -82,7 +83,7 @@ class Header implements IteratorAggregate {
      *
      * @return Cookie[]
      */
-    public function getCookies($format = self::COOKIES_FLAT) {
+    public function getCookies(string $format = self::COOKIES_FLAT) {
         if (!in_array($format, array(self::COOKIES_FLAT, self::COOKIES_ARRAY))) {
             throw new \InvalidArgumentException(sprintf('Format "%s" invalid (%s).', $format, implode(', ', array(self::COOKIES_FLAT, self::COOKIES_ARRAY))));
         }
@@ -229,13 +230,13 @@ class Header implements IteratorAggregate {
         $cacheControl = array();
         preg_match_all('#([a-zA-Z][a-zA-Z_-]*)\s*(?:=(?:"([^"]*)"|([^ \t",;]*)))?#', $header, $matches, PREG_SET_ORDER);
         foreach ($matches as $match) {
-            $cacheControl[strtolower($match[1])] = isset($match[3]) ? $match[3] : (isset($match[2]) ? $match[2] : true);
+            $cacheControl[strtolower($match[1])] = $match[3] ?? ($match[2] ?? true);
         }
 
         return $cacheControl;
     }
 
-    public function setRedirect($url, $time = 0) {
+    public function setRedirect($url, int $time = 0) {
         if (empty($url)) {
             return $this;
         }
@@ -245,7 +246,7 @@ class Header implements IteratorAggregate {
         return $this->set('Refresh', $time.';url='.$url);
     }
 
-    public function setXPoweredBy($name = 'PHP/5.6.12') {
+    public function setXPoweredBy(string $name = 'PHP/8.0') {
         return $this->set('X-Powered-By', $name);
     }
 
@@ -254,11 +255,11 @@ class Header implements IteratorAggregate {
      * @param string $name
      * @return Header
      */
-    public function setServer($name = 'Apache') {
+    public function setServer(string $name = 'Apache') {
         return $this->set('Server', $name);
     }
 
-    public function setContentLanguage($language = 'zh-CN') {
+    public function setContentLanguage(string $language = 'zh-CN') {
         return $this->set('Content-language', $language);
     }
 
@@ -267,7 +268,7 @@ class Header implements IteratorAggregate {
      * @param string $md5
      * @return Header
      */
-    public function setContentMD5($md5) {
+    public function setContentMD5(string $md5) {
         return $this->set('Content-MD5', $md5);
     }
 
@@ -277,7 +278,7 @@ class Header implements IteratorAggregate {
      * @return Header
      */
     public function setCacheControl(
-        $option = 'no-cache, no-store, max-age=0, must-revalidate') {
+        string $option = 'no-cache, no-store, max-age=0, must-revalidate') {
         return $this->set('Cache-Control', $option);
     }
 
@@ -286,7 +287,7 @@ class Header implements IteratorAggregate {
      * @param string $option
      * @return Header
      */
-    public function setPragma($option) {
+    public function setPragma(string $option) {
         return $this->set('Pragma', $option);
     }
 
@@ -295,7 +296,7 @@ class Header implements IteratorAggregate {
      * @param integer $time
      * @return Header
      */
-    public function setRetryAfter($time) {
+    public function setRetryAfter(int $time) {
         return $this->set('Retry-After', $time);
     }
 
@@ -304,7 +305,7 @@ class Header implements IteratorAggregate {
      * @param integer $time
      * @return Header
      */
-    public function setDate($time) {
+    public function setDate(int $time) {
         return $this->set('Date', gmdate('D, d M Y H:i:s', $time).' GMT');
     }
 
@@ -313,7 +314,7 @@ class Header implements IteratorAggregate {
      * @param integer $time
      * @return Header
      */
-    public function setExpires($time) {
+    public function setExpires(int $time) {
         return $this->set('Expires', gmdate('D, d M Y H:i:s', $time).' GMT');
     }
 
@@ -322,7 +323,7 @@ class Header implements IteratorAggregate {
      * @param integer $time
      * @return Header
      */
-    public function setLastModified($time) {
+    public function setLastModified(int $time) {
         return $this->set('Last-Modified', gmdate('D, d M Y H:i:s', $time).' GMT');
     }
 
@@ -331,17 +332,17 @@ class Header implements IteratorAggregate {
      * @param int|string $length
      * @return Header
      */
-    public function setContentLength($length) {
+    public function setContentLength(int|string $length) {
         return $this->set('Content-Length', $length);
     }
 
     /**
      * 文件流的范围
-     * @param integer $length
+     * @param string|int $length
      * @param string $type
      * @return Header
      */
-    public function setContentRange($length, $type = 'bytes') {
+    public function setContentRange(string|int $length, string $type = 'bytes') {
         return $this->set('Content-Range', $type.' '.$length);
     }
 
@@ -350,7 +351,7 @@ class Header implements IteratorAggregate {
      * @param string $type
      * @return Header
      */
-    public function setAcceptRanges($type = 'bytes') {
+    public function setAcceptRanges(string $type = 'bytes') {
         return $this->set('Accept-Ranges', $type);
     }
 
@@ -360,8 +361,8 @@ class Header implements IteratorAggregate {
      * @return Header
      * @throws \Exception
      */
-    public function setContentDisposition($filename) {
-        if (strpos(app('request')->server('HTTP_USER_AGENT'), 'MSIE') !== false) {     //如果是IE浏览器
+    public function setContentDisposition(string $filename) {
+        if (str_contains(app('request')->server('HTTP_USER_AGENT'), 'MSIE')) {     //如果是IE浏览器
             $filename = preg_replace('/\./', '%2e', $filename, substr_count($filename, '.') - 1);
         }
         return $this->set('Content-Disposition', 'attachment; filename="'.$filename.'"');
@@ -375,7 +376,9 @@ class Header implements IteratorAggregate {
      * @param string $opaque
      * @return Header
      */
-    public function setWWWAuthenticate($realm, $qop = 'auth', $nonce = null, $opaque = null) {
+    public function setWWWAuthenticate(string $realm, string $qop = 'auth',
+                                       string $nonce = '',
+                                       string $opaque = '') {
         if (empty($nonce) && empty($opaque)) {
             $content = sprintf('Basic realm="%s"', $realm);
         } else {
@@ -390,7 +393,7 @@ class Header implements IteratorAggregate {
      * @param string $encoding
      * @return Header
      */
-    public function setTransferEncoding($encoding = 'chunked') {
+    public function setTransferEncoding(string $encoding = 'chunked') {
         return $this->set('Transfer-Encoding', $encoding);
     }
 
@@ -404,17 +407,20 @@ class Header implements IteratorAggregate {
      * @return Header
      */
     public function setCORS(
-        $allowedOrigins = '*',
-        $allowedMethods = '*',
-        $allowedHeaders = '*',//'Authorization, Content-Type, X-Requested-With',
-        $maxAge = 0,
-        $supportsCredentials = false) {
+        string $allowedOrigins = '*',
+        string $allowedMethods = '*',
+        string $allowedHeaders = '*',//'Authorization, Content-Type, X-Requested-With',
+        int $maxAge = 0,
+        $supportsCredentials = false,
+        string $exposeHeaders = 'Content-Disposition',
+    ) {
         return $this->add([
             'Access-Control-Allow-Origin' => $allowedOrigins,
             'Access-Control-Allow-Credentials' => $supportsCredentials,
             'Access-Control-Allow-Methods' => $allowedMethods,
             'Access-Control-Max-Age' => $maxAge,
-            'Access-Control-Allow-Headers' => $allowedHeaders
+            'Access-Control-Allow-Headers' => $allowedHeaders,
+            'Access-Control-Expose-Headers' => $exposeHeaders
         ]);
     }
 
@@ -451,7 +457,7 @@ class Header implements IteratorAggregate {
      * @param string $option
      * @return Header
      */
-    public function setContentType($type = 'html', $option = 'utf-8') {
+    public function setContentType(string $type = 'html', string $option = 'utf-8') {
         $type = strtolower($type);
         if ($type == 'image' || $type == 'img') {
             return $this->set('Content-Type', 'image/'.$option);
