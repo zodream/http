@@ -27,15 +27,15 @@ class Http {
     const PUT = 'put';
     const OPTIONS = 'options';
 
-    private $_jsonPattern = '/^(?:application|text)\/(?:[a-z]+(?:[\.-][0-9a-z]+){0,}[\+\.]|x-)?json(?:-[a-z]+)?/i';
-    private $_xmlPattern = '~^(?:text/|application/(?:atom\+|rss\+)?)xml~i';
+    private string $_jsonPattern = '/^(?:application|text)\/(?:[a-z]+(?:[\.-][0-9a-z]+){0,}[\+\.]|x-)?json(?:-[a-z]+)?/i';
+    private string $_xmlPattern = '~^(?:text/|application/(?:atom\+|rss\+)?)xml~i';
 
     /**
      * 原始数据
      * @var array|mixed
      */
     protected $parameters = [];
-    protected $method = self::GET;
+    protected string $method = self::GET;
     /**
      * @var resource
      */
@@ -50,7 +50,7 @@ class Http {
      * 网址参数地图
      * @var array
      */
-    protected $uriMaps = [];
+    protected array $uriMaps = [];
 
     /**
      * 编码
@@ -62,13 +62,13 @@ class Http {
      * post 参数地图
      * @var array
      */
-    protected $formMaps = [];
+    protected array $formMaps = [];
 
     /**
      * https 是否验证 ssl 证书
      * @var bool
      */
-    protected $verifySSL = false;
+    protected bool $verifySSL = false;
 
     /**
      * 针对post 数据的编码
@@ -420,7 +420,7 @@ class Http {
         if (empty($key)) {
             return $this->responseHeaders;
         }
-        return isset($this->responseHeaders[$key]) ? $this->responseHeaders[$key] : null;
+        return $this->responseHeaders[$key] ?? null;
     }
 
     /**
@@ -452,7 +452,7 @@ class Http {
      * @throws \Exception
      */
     public function getResponseText() {
-        if (is_resource($this->curl)
+        if (!empty($this->curl)
             && is_null($this->responseText)) {
             return $this->execute();
         }
@@ -648,8 +648,7 @@ class Http {
         }
         $binary_data = false;
         foreach ($parameters as $key => $value) {
-            if (is_string($value) && strpos($value, '@')
-                === 0 && is_file(substr($value, 1))) {
+            if (is_string($value) && str_starts_with($value, '@') && is_file(substr($value, 1))) {
                 $binary_data = true;
                 if (class_exists('CURLFile')) {
                     $parameters[$key] = new \CURLFile(substr($value, 1));
