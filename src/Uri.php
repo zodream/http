@@ -248,7 +248,7 @@ class Uri {
         if (is_null($key)) {
             return $this->data;
         }
-        return $this->data[$key] ?: false;
+        return $this->data[$key] ?? false;
     }
 
     /**
@@ -290,7 +290,7 @@ class Uri {
 
     /**
      * STRING TO
-     * @param $url
+     * @param string $url
      * @return $this
      */
     public function decode(string $url) {
@@ -308,7 +308,7 @@ class Uri {
      * @param bool $hasRoot
      * @return string
      */
-    public function encode($hasRoot = true) {
+    public function encode(bool $hasRoot = true) {
         $arg = $hasRoot && !empty($this->host) ? $this->getRoot() : null;
         $arg .= '/'.ltrim($this->path, '/');
         if (!empty($this->data)) {
