@@ -207,12 +207,12 @@ class Http {
      * @return Http
      */
     public function cookie($key, $value = null) {
-        if (strpos($key, '@') === 0
+        if (str_starts_with($key, '@')
             && is_file(substr($key, 1))) {
             return $this->setCookieFile(substr($key, 1));
         }
         if (is_array($key)
-            || strpos($key, '=') !== false) {
+            || str_contains($key, '=')) {
             return $this->setCookie($key);
         }
         return $this->setCookie([
