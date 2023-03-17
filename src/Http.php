@@ -128,7 +128,7 @@ class Http {
      * @param array $parameters
      * @return Http
      */
-    public function maps(array $maps, $parameters = []) {
+    public function maps(array $maps, array $parameters = []) {
         // 更改请求方式
         if ($this->method == self::GET) {
             $this->method = self::POST;
