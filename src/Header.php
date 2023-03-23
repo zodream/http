@@ -362,7 +362,7 @@ class Header implements IteratorAggregate {
      * @throws \Exception
      */
     public function setContentDisposition(string $filename) {
-        if (str_contains(app('request')->server('HTTP_USER_AGENT'), 'MSIE')) {     //如果是IE浏览器
+        if (str_contains(app('request')->server('HTTP_USER_AGENT', ''), 'MSIE')) {     //如果是IE浏览器
             $filename = preg_replace('/\./', '%2e', $filename, substr_count($filename, '.') - 1);
         }
         return $this->set('Content-Disposition', 'attachment; filename="'.$filename.'"');
@@ -486,6 +486,7 @@ class Header implements IteratorAggregate {
             'exe'   => 'application/octet-stream',
             'flv'   => 'video/x-flv',
             'flash' => 'application/x-shockwave-flash',
+            'flac' => 'audio/mpeg',
             'gif'   => 'image/gif',
             'gtar'  => 'application/x-gtar',
             'gz'    => 'application/x-gzip',
