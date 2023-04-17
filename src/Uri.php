@@ -372,7 +372,7 @@ class Uri {
             if (isset($args['path'])) {
                 $this->addPath($args['path']);
             }
-            if (isset($args['query']) && !empty($args['query'])) {
+            if (!empty($args['query'])) {
                 parse_str($args['query'], $data);
                 $this->addData($data);
             }
@@ -381,7 +381,7 @@ class Uri {
         if (isset($args['path'])) {
             $this->path = $args['path'];
         }
-        if (isset($args['query']) && !empty($args['query'])) {
+        if (!empty($args['query'])) {
             parse_str($args['query'], $data);
             $this->setData($data);
         }
