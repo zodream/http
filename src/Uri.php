@@ -263,8 +263,8 @@ class Uri {
      * @param string $arg
      * @return $this
      */
-    public function setFragment($arg) {
-        $this->fragment = $arg;
+    public function setFragment(mixed $arg) {
+        $this->fragment = (string)$arg;
         return $this;
     }
 
@@ -272,7 +272,7 @@ class Uri {
      * @param string $arg
      * @return $this
      */
-    public function addFragment($arg) {
+    public function addFragment(mixed $arg) {
         if (empty($this->fragment)) {
             return $this->setFragment($arg);
         }
