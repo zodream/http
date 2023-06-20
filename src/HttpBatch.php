@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Zodream\Http;
 
 
@@ -9,7 +10,7 @@ class HttpBatch {
      */
     protected $handle;
 
-    protected $https = [];
+    protected array $https = [];
 
     public function __construct(array $options = []) {
         $this->handle = curl_multi_init();
@@ -23,7 +24,7 @@ class HttpBatch {
         return $this;
     }
 
-    public function addHttp(...$https) {
+    public function addHttp(mixed ...$https) {
         foreach ($https as $http) {
             if ($http instanceof Http) {
                 $this->addHandle($http->getHandle());
@@ -47,7 +48,7 @@ class HttpBatch {
      * @param resource|Http $curl
      * @return bool
      */
-    protected function addHandle($curl) {
+    protected function addHandle(mixed $curl) {
         return curl_multi_add_handle($this->handle,
                 $curl instanceof Http ? $curl->getHandle() : $curl) === CURLM_OK;
     }
@@ -56,7 +57,7 @@ class HttpBatch {
      * @param resource|Http $curl
      * @return int
      */
-    public function removeHandle($curl) {
+    public function removeHandle(mixed $curl) {
         return curl_multi_remove_handle($this->handle,
             $curl instanceof Http ? $curl->getHandle() : $curl);
     }
@@ -131,9 +132,9 @@ class HttpBatch {
 
     /**
      * @param $curl
-     * @return string
+     * @return string|null
      */
-    public static function getHttpContent($curl) {
+    public static function getHttpContent($curl): ?string {
         return curl_multi_getcontent($curl instanceof Http ? $curl->getHandle() : $curl);
     }
 

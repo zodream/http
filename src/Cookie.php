@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Zodream\Http;
 
 /*
@@ -16,13 +17,13 @@ namespace Zodream\Http;
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
 class Cookie {
-    protected $name;
-    protected $value;
-    protected $domain;
-    protected $expire;
-    protected $path;
-    protected $secure;
-    protected $httpOnly;
+    protected string $name;
+    protected mixed $value;
+    protected string $domain;
+    protected int $expire;
+    protected string $path;
+    protected bool $secure;
+    protected bool $httpOnly;
 
     /**
      * Constructor.
@@ -37,7 +38,9 @@ class Cookie {
      *
      * @throws \InvalidArgumentException
      */
-    public function __construct($name, $value = '', $expire = 0, $path = '/', $domain = '', $secure = false, $httpOnly = true)
+    public function __construct(
+        string $name, mixed $value = '',
+        mixed $expire = 0, string $path = '/',  string $domain = '', bool $secure = false, bool $httpOnly = true)
     {
         // from PHP source code
         if (preg_match("/[=,; \t\r\n\013\014]/", $name)) {
@@ -50,7 +53,7 @@ class Cookie {
 
         // convert expiration time to a Unix timestamp
         if ($expire instanceof \DateTime || $expire instanceof \DateTimeInterface) {
-            $expire = $expire->format('U');
+            $expire = (int)$expire->format('U');
         } elseif (!is_numeric($expire)) {
             $expire = strtotime($expire);
 
@@ -60,12 +63,12 @@ class Cookie {
         }
 
         $this->name = $name;
-        $this->value = $value.'';
+        $this->value = (string)$value;
         $this->domain = $domain;
         $this->expire = $expire;
         $this->path = empty($path) ? '/' : $path;
-        $this->secure = (bool) $secure;
-        $this->httpOnly = (bool) $httpOnly;
+        $this->secure = $secure;
+        $this->httpOnly = $httpOnly;
     }
 
     /**
@@ -110,7 +113,7 @@ class Cookie {
      *
      * @return string
      */
-    public function getName() {
+    public function getName(): string {
         return $this->name;
     }
 
@@ -119,7 +122,7 @@ class Cookie {
      *
      * @return string
      */
-    public function getValue() {
+    public function getValue(): string {
         return $this->value;
     }
 
@@ -128,7 +131,7 @@ class Cookie {
      *
      * @return string
      */
-    public function getDomain() {
+    public function getDomain(): string {
         return $this->domain;
     }
 
@@ -137,7 +140,7 @@ class Cookie {
      *
      * @return int
      */
-    public function getExpiresTime() {
+    public function getExpiresTime(): int {
         return $this->expire;
     }
 
@@ -146,7 +149,7 @@ class Cookie {
      *
      * @return string
      */
-    public function getPath() {
+    public function getPath(): string {
         return $this->path;
     }
 
@@ -155,7 +158,7 @@ class Cookie {
      *
      * @return bool
      */
-    public function isSecure() {
+    public function isSecure(): bool {
         return $this->secure;
     }
 
@@ -164,7 +167,7 @@ class Cookie {
      *
      * @return bool
      */
-    public function isHttpOnly() {
+    public function isHttpOnly(): bool {
         return $this->httpOnly;
     }
 
@@ -173,7 +176,7 @@ class Cookie {
      *
      * @return bool
      */
-    public function isCleared() {
+    public function isCleared(): bool {
         return $this->expire < time();
     }
 }

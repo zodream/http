@@ -1,4 +1,5 @@
-<?php 
+<?php
+declare(strict_types=1);
 namespace Zodream\Http;
 /**
 * socket 
@@ -7,13 +8,13 @@ namespace Zodream\Http;
 */
 
 class Socket {
-	protected $socket;
+	protected mixed $socket = null;
 	
-	protected $ip;
+	protected string $ip = '127.0.0.1';
 	
-	protected $port;
+	protected int $port = 80;
     
-    public function __construct($ip = null, $port = null) {
+    public function __construct(string $ip, int $port = 0) {
         if (!empty($ip) && !empty($port)) {
             $this->setIpAddress($ip, $port);
         }
@@ -25,8 +26,8 @@ class Socket {
      * @param int $port
      * @return $this
      */
-    public function setIpAddress($ip, $port = 80) {
-        if (false !== strpos($ip, ':')) {
+    public function setIpAddress(string $ip, int $port = 80) {
+        if (str_contains($ip, ':')) {
             list($ip, $port) = explode(':', $ip);
         }
         if (empty($ip)) {
@@ -45,11 +46,12 @@ class Socket {
         return $this;
 	}
 
-	/**
-	 * 服务端
-	 * @param int|number $backlog
-	 */
-	public function listen($backlog = 4) {
+    /**
+     * 服务端
+     * @param int $backlog
+     * @return Socket
+     */
+	public function listen(int $backlog = 4) {
 		socket_bind($this->socket, $this->ip, $this->port);
 		socket_listen($this->socket, $backlog); // 4条等待
         return $this;
@@ -71,12 +73,12 @@ class Socket {
         return $this;
 	}
 
-	/**
-	 * 取出信息
-	 * @param int|string $length
-	 * @return string
-	 */
-	public function read($length = 8192) {
+    /**
+     * 取出信息
+     * @param int $length
+     * @return string
+     */
+	public function read(int $length = 8192) {
 		$content = '';
 		while ($buff = socket_read($this->socket, $length)) {
 			$content .= $buff;
@@ -88,7 +90,7 @@ class Socket {
 	 * 发送信息
 	 * @param string $content
 	 */
-	public function write($content) {
+	public function write(string $content) {
 	    socket_write($this->socket, $content);
         return $this;
 	}
@@ -104,7 +106,7 @@ class Socket {
 	/**
 	 * 获取上一天错误信息
 	 */
-	public function getError() {
+	public function getError(): string {
 		return socket_strerror(socket_last_error($this->socket));
 	}
 

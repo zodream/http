@@ -78,10 +78,10 @@ class Uri {
     }
 
     /**
-     * @param int $arg
+     * @param string|int $arg
      * @return $this
      */
-    public function setPort($arg = 80) {
+    public function setPort(string|int $arg = 80) {
         $this->port = intval($arg);
         return $this;
     }
@@ -151,7 +151,7 @@ class Uri {
         if (isset($src['query'])) {
             $this->setData($src['query']);
         }
-        if (substr($src['path'], 0, 1) == '/') {
+        if (str_starts_with($src['path'], '/')) {
             return $this->setPath($src['path']);
         }
         $path = dirname($this->path).'/'.$src['path'];
@@ -210,7 +210,7 @@ class Uri {
      * @param string $value
      * @return $this
      */
-    public function addData(string|array $key, $value = null) {
+    public function addData(string|array $key, mixed $value = null) {
         if (empty($key)) {
             return $this;
         }
@@ -224,10 +224,10 @@ class Uri {
 
     /**
      * 移除键
-     * @param $keys
+     * @param mixed $keys
      * @return $this
      */
-    public function removeData($keys) {
+    public function removeData(mixed $keys) {
         if (!is_array($keys)) {
             $keys = func_get_args();
         }
@@ -244,7 +244,7 @@ class Uri {
      * @param string $key
      * @return array|bool
      */
-    public function getData($key = null) {
+    public function getData(?string $key = null): mixed {
         if (is_null($key)) {
             return $this->data;
         }
@@ -255,7 +255,7 @@ class Uri {
      * 判断是否有值
      * @return bool
      */
-    public function hasData() {
+    public function hasData(): bool {
         return !empty($this->data);
     }
 
@@ -324,7 +324,7 @@ class Uri {
      * GET URL ROOT
      * @return string
      */
-    public function getRoot() {
+    public function getRoot(): string {
         $arg = $this->scheme.'://';
         if (!empty($this->username) && !empty($this->password)) {
             $arg .= $this->username.':'.$this->password.'@';
@@ -336,7 +336,7 @@ class Uri {
         return $arg;
     }
 
-    public function __toString() {
+    public function __toString(): string {
         return $this->encode();
     }
 

@@ -35,13 +35,13 @@ class Header implements IteratorAggregate {
     }
 
     public function setCookie(
-        $cookie,
-        $value = null,
-        $expire = 0,
-        $path = '/',
-        $domain = null,
-        $secure = false,
-        $httpOnly = true) {
+        string|Cookie $cookie,
+        mixed $value = null,
+        mixed $expire = 0,
+        string $path = '/',
+        string $domain = '',
+        bool $secure = false,
+        bool $httpOnly = true) {
         if (!$cookie instanceof Cookie) {
             $cookie = new Cookie(
                 $cookie,
@@ -57,7 +57,7 @@ class Header implements IteratorAggregate {
         return $this;
     }
 
-    public function removeCookie($name, $path = '/', $domain = null) {
+    public function removeCookie(string $name, string $path = '/', string $domain = '') {
         if (null === $path) {
             $path = '/';
         }
@@ -83,7 +83,7 @@ class Header implements IteratorAggregate {
      *
      * @return Cookie[]
      */
-    public function getCookies(string $format = self::COOKIES_FLAT) {
+    public function getCookies(string $format = self::COOKIES_FLAT): array {
         if (!in_array($format, array(self::COOKIES_FLAT, self::COOKIES_ARRAY))) {
             throw new \InvalidArgumentException(sprintf('Format "%s" invalid (%s).', $format, implode(', ', array(self::COOKIES_FLAT, self::COOKIES_ARRAY))));
         }
@@ -114,11 +114,13 @@ class Header implements IteratorAggregate {
      * @param bool $httpOnly
      * @return Header
      */
-    public function clearCookie($name, $path = '/', $domain = null, $secure = false, $httpOnly = true) {
+    public function clearCookie(string $name,
+                                string $path = '/', string $domain = '',
+                                bool $secure = false, bool $httpOnly = true) {
         return $this->setCookie(new Cookie($name, null, 1, $path, $domain, $secure, $httpOnly));
     }
 
-    public function __toString() {
+    public function __toString(): string {
         $cookies = '';
         foreach ($this->getCookies() as $cookie) {
             $cookies .= 'Set-Cookie: '.$cookie."\r\n";
@@ -142,7 +144,7 @@ class Header implements IteratorAggregate {
         return $content.$cookies;
     }
 
-    public function all() {
+    public function all(): array {
         return $this->headers;
     }
 
@@ -151,7 +153,7 @@ class Header implements IteratorAggregate {
      *
      * @return array An array of parameter keys
      */
-    public function keys() {
+    public function keys(): array {
         return array_keys($this->headers);
     }
 
@@ -173,7 +175,7 @@ class Header implements IteratorAggregate {
         return $this;
     }
 
-    public function get($key, $default = null, $first = true) {
+    public function get(string $key, mixed $default = null, bool $first = true) {
         $key = $this->filterKey($key);
 
         if (!array_key_exists($key, $this->headers)) {
@@ -191,7 +193,7 @@ class Header implements IteratorAggregate {
         return $this->headers[$key];
     }
 
-    public function set($key, $values, $replace = true) {
+    public function set(string $key, mixed $values, bool $replace = true) {
         $key = $this->filterKey($key);
 
         $values = array_values((array) $values);
@@ -208,16 +210,16 @@ class Header implements IteratorAggregate {
         return $this;
     }
 
-    protected function filterKey($key) {
+    protected function filterKey(string $key): string {
         $key = str_replace(['_', '-'], [' ', ' '], strtolower($key));
         return str_replace(' ', '-', ucwords($key));
     }
 
-    public function has($key) {
+    public function has(string $key): bool {
         return array_key_exists(str_replace('_', '-', strtolower($key)), $this->headers);
     }
 
-    public function delete($tag) {
+    public function delete(string $tag) {
         $tag = str_replace('_', '-', strtolower($tag));
         unset($this->headers[$tag]);
         if ('cache-control' === $tag) {
@@ -226,7 +228,7 @@ class Header implements IteratorAggregate {
         return $this;
     }
 
-    protected function parseCacheControl($header) {
+    protected function parseCacheControl(string $header): array {
         $cacheControl = array();
         preg_match_all('#([a-zA-Z][a-zA-Z_-]*)\s*(?:=(?:"([^"]*)"|([^ \t",;]*)))?#', $header, $matches, PREG_SET_ORDER);
         foreach ($matches as $match) {
@@ -236,7 +238,7 @@ class Header implements IteratorAggregate {
         return $cacheControl;
     }
 
-    public function setRedirect($url, int $time = 0) {
+    public function setRedirect(string $url, int $time = 0) {
         if (empty($url)) {
             return $this;
         }
@@ -411,7 +413,7 @@ class Header implements IteratorAggregate {
         string $allowedMethods = '*',
         string $allowedHeaders = '*',//'Authorization, Content-Type, X-Requested-With',
         int $maxAge = 0,
-        $supportsCredentials = false,
+        mixed $supportsCredentials = false,
         string $exposeHeaders = 'Content-Disposition',
     ) {
         return $this->add([
@@ -433,7 +435,9 @@ class Header implements IteratorAggregate {
      * @param bool $nopush
      * @return Header
      */
-    public function setLink($url, $as, $type = null, $crossorigin = false, $nopush = false) {
+    public function setLink(string $url,
+                            string $as, ?string $type = null,
+                            bool $crossorigin = false, bool $nopush = false) {
         $args = [
             sprintf('<%s>', $url),
             'rel=preload',
@@ -484,7 +488,7 @@ class Header implements IteratorAggregate {
         return $this->replace($args);
     }
 
-    public function toArray() {
+    public function toArray(): array {
         return $this->all();
     }
 }

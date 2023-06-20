@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Zodream\Http;
 
 use Zodream\Disk\File;
@@ -34,7 +35,7 @@ class Http {
      * 原始数据
      * @var array|mixed
      */
-    protected $parameters = [];
+    protected mixed $parameters = [];
     protected string $method = self::GET;
     /**
      * @var resource
@@ -42,9 +43,9 @@ class Http {
     protected $curl;
 
     /**
-     * @var Uri
+     * @var Uri|null
      */
-    protected $uri;
+    protected ?Uri  $uri = null;
 
     /**
      * 网址参数地图
@@ -56,7 +57,7 @@ class Http {
      * 编码
      * @var mixed
      */
-    protected $uriEncodeFunc;
+    protected mixed $uriEncodeFunc = null;
 
     /**
      * post 参数地图
@@ -74,30 +75,30 @@ class Http {
      * 针对post 数据的编码
      * @var array
      */
-    protected $encodeFunc = [];
+    protected array $encodeFunc = [];
 
     /**
      * 解码方法
      * @var array
      */
-    protected $decodeFunc = [];
+    protected array $decodeFunc = [];
 
     /**
      * @var array 响应头
      */
-    protected $responseHeaders;
+    protected array $responseHeaders = [];
     /**
-     * @var string 响应正文
+     * @var bool|string|null 响应正文
      */
-    protected $responseText;
+    protected bool|string|null $responseText = null;
 
-    protected $isMulti = false;
+    protected bool $isMulti = false;
 
     /**
      * Http constructor.
      * @param null $url
      */
-    public function __construct($url = null) {
+    public function __construct(mixed $url = null) {
         $this->curl = curl_init();
         if (!empty($url)) {
             $this->url($url);
@@ -112,7 +113,7 @@ class Http {
      * @param bool $verifySSL
      * @return Http
      */
-    public function url($url, array $maps = [], $func = null, $verifySSL = false) {
+    public function url(string|Uri $url, array $maps = [], mixed $func = null, bool $verifySSL = false) {
         if (!empty($url)) {
             $this->uri = !$url instanceof Uri ? new Uri((string)$url) : $url;
         }
@@ -150,10 +151,10 @@ class Http {
 
     /**
      * 设置参数
-     * @param $parameters
+     * @param mixed $parameters
      * @return Http
      */
-    public function parameters($parameters) {
+    public function parameters(mixed $parameters) {
         if (empty($parameters)) {
             return $this;
         }
@@ -169,7 +170,7 @@ class Http {
      * @param bool $is_clear 清空原有的d
      * @return Http
      */
-    public function encode($func = self::JSON, $is_clear = false) {
+    public function encode(string|callable $func = self::JSON, bool $is_clear = false) {
         if ($is_clear) {
             $this->encodeFunc = [];
         }
@@ -182,7 +183,7 @@ class Http {
      * @param string $method
      * @return Http
      */
-    public function method($method = self::GET) {
+    public function method(string $method = self::GET) {
         $this->method = strtolower($method);
         return $this;
     }
@@ -191,10 +192,10 @@ class Http {
      * Progress
      *
      * @access public
-     * @param  $callback
+     * @param mixed $callback
      * @return Http
      */
-    public function progress($callback) {
+    public function progress(mixed $callback) {
         $this->setOption(CURLOPT_PROGRESSFUNCTION, $callback);
         $this->setOption(CURLOPT_NOPROGRESS, false);
         return $this;
@@ -206,8 +207,8 @@ class Http {
      * @param null $value
      * @return Http
      */
-    public function cookie($key, $value = null) {
-        if (str_starts_with($key, '@')
+    public function cookie(string|array $key, mixed $value = null) {
+        if (is_string($key) && str_starts_with($key, '@')
             && is_file(substr($key, 1))) {
             return $this->setCookieFile(substr($key, 1));
         }
@@ -222,11 +223,11 @@ class Http {
 
     /**
      * 设置请求头
-     * @param $key
+     * @param string|array $key
      * @param null $value
      * @return Http
      */
-    public function header($key, $value = null) {
+    public function header(string|array $key, mixed $value = null) {
         if (is_array($key)) {
             return $this->setHeader($key);
         }
@@ -240,7 +241,7 @@ class Http {
      * @return mixed|null
      * @throws \Exception
      */
-    public function get() {
+    public function get(): mixed {
         return $this->method()->text();
     }
 
@@ -248,7 +249,7 @@ class Http {
      * @return mixed|null
      * @throws \Exception
      */
-    public function post() {
+    public function post(): mixed {
         return $this->method(self::POST)->text();
     }
 
@@ -256,7 +257,7 @@ class Http {
      * @return mixed|null
      * @throws \Exception
      */
-    public function delete() {
+    public function delete(): mixed {
         return $this->method(self::DELETE)->text();
     }
 
@@ -264,7 +265,7 @@ class Http {
      * @return mixed|null
      * @throws \Exception
      */
-    public function patch() {
+    public function patch(): mixed {
         return $this->method(self::PATCH)->text();
     }
 
@@ -272,7 +273,7 @@ class Http {
      * @return mixed|null
      * @throws \Exception
      */
-    public function put() {
+    public function put(): mixed {
         return $this->method(self::PUT)->text();
     }
 
@@ -280,7 +281,7 @@ class Http {
      * @return mixed|null
      * @throws \Exception
      */
-    public function head() {
+    public function head(): mixed {
         return $this->method(self::HEAD)->text();
     }
 
@@ -288,7 +289,7 @@ class Http {
      * @return mixed|null
      * @throws \Exception
      */
-    public function options() {
+    public function options(): mixed {
         return $this->method(self::OPTIONS)->text();
     }
 
@@ -296,7 +297,7 @@ class Http {
      * @return mixed|null
      * @throws \Exception
      */
-    public function search() {
+    public function search(): mixed {
         return $this->method(self::SEARCH)->text();
     }
 
@@ -304,7 +305,7 @@ class Http {
      * @return mixed|null
      * @throws \Exception
      */
-    public function text() {
+    public function text(): mixed {
         return $this->setCommonOption()->execute();
     }
 
@@ -312,7 +313,7 @@ class Http {
      * @return array|mixed|object
      * @throws \Exception
      */
-    public function xml() {
+    public function xml(): mixed {
         return $this->decode(self::XML, true)->text();
     }
 
@@ -320,7 +321,7 @@ class Http {
      * @return mixed
      * @throws \Exception
      */
-    public function json() {
+    public function json(): mixed {
         return $this->decode(self::JSON, true)->text();
     }
 
@@ -330,7 +331,7 @@ class Http {
      * @return string
      * @throws \Exception
      */
-    public function save($file) {
+    public function save(mixed $file): string {
         if (!$file instanceof Stream) {
             $file = new Stream($file);
         }
@@ -347,17 +348,17 @@ class Http {
      * @return mixed|null
      * @throws \Exception
      */
-    public function show() {
+    public function show(): mixed {
         return $this->execute();
     }
 
     /**
      * 解码相应内容
-     * @param null $func
-     * @param bool $is_clear  清空原有的
+     * @param string|callable|null $func
+     * @param bool $is_clear 清空原有的
      * @return $this
      */
-    public function decode($func = null, $is_clear = false) {
+    public function decode(string|callable $func = null, bool $is_clear = false) {
         if ($is_clear) {
             $this->decodeFunc = [];
         }
@@ -367,9 +368,9 @@ class Http {
 
     /**
      * 获取错误信息
-     * @return string
+     * @return string|null
      */
-    public function error() {
+    public function error(): ?string {
         return $this->responseHeaders['error'];
     }
 
@@ -378,9 +379,9 @@ class Http {
      * @return mixed|null
      * @throws \Exception
      */
-    public function execute() {
+    public function execute(): mixed {
         if ($this->isMulti) {
-            return;
+            return null;
         }
         $this->applyMethod();
         $this->responseText = curl_exec($this->curl);
@@ -392,7 +393,7 @@ class Http {
      * @return array|mixed|object
      * @throws Exception
      */
-    public function executeWithBatch() {
+    public function executeWithBatch(): mixed {
         $this->responseText = HttpBatch::getHttpContent($this->curl);
         self::log('HTTP RESPONSE: '.$this->responseText);
         return $this->parseResponse();
@@ -402,7 +403,7 @@ class Http {
      * @return array|mixed|object
      * @throws Exception
      */
-    protected function parseResponse() {
+    protected function parseResponse(): mixed {
         $this->responseHeaders = curl_getinfo($this->curl);
         $this->responseHeaders['error'] = curl_error($this->curl);
         $this->responseHeaders['errorNo'] = curl_errno($this->curl);
@@ -413,10 +414,10 @@ class Http {
     }
 
     /**
-     * @param null $key
-     * @return array| string
+     * @param string|null $key
+     * @return array|string|null
      */
-    public function getResponseHeader($key = null) {
+    public function getResponseHeader(?string $key = null): array|string|null {
         if (empty($key)) {
             return $this->responseHeaders;
         }
@@ -427,7 +428,7 @@ class Http {
      * GET STATUS
      * @return mixed
      */
-    public function getStatusCode() {
+    public function getStatusCode(): string|int {
         return $this->responseHeaders['http_code'];
     }
 
@@ -435,7 +436,7 @@ class Http {
      * 获取响应内容
      * @return mixed
      */
-    public function getContentType() {
+    public function getContentType(): string {
         return $this->responseHeaders['content_type'];
     }
 
@@ -459,7 +460,7 @@ class Http {
         return $this->responseText;
     }
 
-    public function setHeaderOption($hasHeader = false) {
+    public function setHeaderOption(bool $hasHeader = false) {
         return $this->setOption(CURLOPT_HEADER, $hasHeader);   // 是否输出包含头部
     }
 
@@ -486,12 +487,12 @@ class Http {
     /**
      * 设置代理
      * @param string $host
-     * @param string $port
-     * @param string $user
-     * @param string $pwd
+     * @param string|int|null $port
+     * @param string|null $user
+     * @param string|null $pwd
      * @return $this|Http
      */
-    public function setProxy($host, $port = null, $user = null, $pwd = null) {
+    public function setProxy(string $host, string|int|null $port = null, ?string $user = null, ?string $pwd = null) {
         $this->setOption(CURLOPT_PROXY, $host);
         if (!empty($port)) {
             $this->setOption(CURLOPT_PROXYPORT, $port);
@@ -508,7 +509,7 @@ class Http {
      * @param string $args
      * @return Http
      */
-    public function setUserAgent($args) {
+    public function setUserAgent(string $args) {
         return $this->setOption(CURLOPT_USERAGENT, $args);
     }
 
@@ -517,7 +518,7 @@ class Http {
      * @param string|Uri $url
      * @return Http
      */
-    public function setReferrer($url) {
+    public function setReferrer(string|Uri $url) {
         return $this->setOption(CURLOPT_REFERER, (string)$url);
     }
 
@@ -534,7 +535,7 @@ class Http {
      * @param string|array $cookie
      * @return Http
      */
-    public function setCookie($cookie) {
+    public function setCookie(string|array $cookie) {
         if (empty($cookie)) {
             return $this;
         }
@@ -549,7 +550,7 @@ class Http {
      * @param string|File $file
      * @return $this
      */
-    public function setCookieFile($file) {
+    public function setCookieFile(mixed $file) {
         $file = (string)$file;
         return $this->setOption(CURLOPT_COOKIEJAR, $file)
             ->setOption(CURLOPT_COOKIEFILE, $file);
@@ -579,15 +580,15 @@ class Http {
     }
 
     /**
-     * @param string|array $option
+     * @param array|string|int $option
      * @param mixed $value
      * @return $this
      */
-    public function setOption($option, $value = null) {
+    public function setOption(array|string|int $option, mixed $value = null) {
         if (is_array($option)) {
             curl_setopt_array($this->curl, $option);
         } else {
-            curl_setopt($this->curl, $option, $value);
+            curl_setopt($this->curl, intval($option), $value);
         }
         return $this;
     }
@@ -609,7 +610,7 @@ class Http {
         }
     }
 
-    public function getPostSource() {
+    public function getPostSource(): mixed {
         if (!is_array($this->parameters)) {
             return $this->parameters;
         }
@@ -641,7 +642,7 @@ class Http {
      * @return array|string
      * @throws Exception
      */
-    public function buildPostParameters() {
+    public function buildPostParameters(): array|string {
         $parameters = $this->getPostSource();
         if (!is_array($parameters)) {
             return $parameters;
@@ -669,7 +670,7 @@ class Http {
      * @return array|mixed|object
      * @throws \Exception
      */
-    protected function decodeResponse($data) {
+    protected function decodeResponse(mixed $data): mixed {
         foreach ($this->decodeFunc as $func) {
             if (is_callable($func)) {
                 $data = call_user_func($func, $data);
@@ -703,7 +704,7 @@ class Http {
      * @return Uri
      * @throws \Exception
      */
-    public function getUrl() {
+    public function getUrl(): Uri {
         if (!empty($this->uriMaps)
             && is_array($this->parameters)) {
             $this->uri->addData($this->getUriParameters());
@@ -717,7 +718,7 @@ class Http {
      * @return array|mixed|object
      * @throws \Exception
      */
-    public function getUriParameters() {
+    public function getUriParameters(): mixed {
         $data = $this->getParametersByMaps($this->uriMaps);
         if (empty($this->uriEncodeFunc)) {
             return $data;
@@ -805,7 +806,7 @@ class Http {
      * @return array
      * @throws Exception
      */
-    protected static function getParametersByKey($key, $item, array $args) {
+    protected static function getParametersByKey(mixed $key, mixed $item, array $args): array {
         if (is_array($item) && is_integer($key)) {
             // 多选多
             return static::chooseParameters($item, $args);
@@ -818,7 +819,7 @@ class Http {
             return [$key => $args[$key]];
         }
         $need = false;
-        if (strpos($key, '#') === 0) {
+        if (str_starts_with($key, '#')) {
             $key = substr($key, 1);
             $need = true;
         }
@@ -854,7 +855,7 @@ class Http {
      * @param $value
      * @return bool
      */
-    public static function isEmpty($value) {
+    public static function isEmpty(mixed $value): bool {
         return !Validator::required()->validate($value);
     }
 
@@ -865,7 +866,7 @@ class Http {
      * @return array
      * @throws Exception
      */
-    protected static function chooseParameters(array $item, array $args) {
+    protected static function chooseParameters(array $item, array $args): array {
         $data = static::getMapParameters($item, $args);
         if (empty($data)) {
             throw new Exception('ONE OF MANY IS NEED!');
@@ -875,10 +876,10 @@ class Http {
 
     /**
      * 尝试gzip解码
-     * @param $res
+     * @param string|null $res
      * @return false|string
      */
-    public static function tryGzipDecode($res) {
+    public static function tryGzipDecode(?string $res): string|false {
         if (empty($res) || strlen($res) < 2) {
             return $res;
         }
@@ -891,9 +892,10 @@ class Http {
 
     /**
      * 输出DEBUG信息
-     * @param $message
+     * @param mixed $message
+     * @throws Exception
      */
-    public static function log($message) {
+    public static function log(mixed $message): void {
         if (!defined('DEBUG') || !DEBUG) {
             return;
         }
@@ -902,7 +904,4 @@ class Http {
         }
         logger($message);
     }
-
-
-
 }
