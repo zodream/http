@@ -28,8 +28,8 @@ class Http {
     const PUT = 'put';
     const OPTIONS = 'options';
 
-    private string $_jsonPattern = '/^(?:application|text)\/(?:[a-z]+(?:[\.-][0-9a-z]+){0,}[\+\.]|x-)?json(?:-[a-z]+)?/i';
-    private string $_xmlPattern = '~^(?:text/|application/(?:atom\+|rss\+)?)xml~i';
+    const JsonPattern = '/^(?:application|text)\/(?:[a-z]+(?:[\.-][0-9a-z]+){0,}[\+\.]|x-)?json(?:-[a-z]+)?/i';
+    const XmlPattern = '~^(?:text/|application/(?:atom\+|rss\+)?)xml~i';
 
     /**
      * 原始数据
@@ -38,7 +38,7 @@ class Http {
     protected mixed $parameters = [];
     protected string $method = self::GET;
     /**
-     * @var resource
+     * @var \CurlHandle
      */
     protected $curl;
 
@@ -95,6 +95,12 @@ class Http {
     protected bool $isMulti = false;
 
     /**
+     * 允许重定向
+     * @var bool
+     */
+    protected bool $allowAutoRedirect = true;
+
+    /**
      * Http constructor.
      * @param null $url
      */
@@ -113,7 +119,8 @@ class Http {
      * @param bool $verifySSL
      * @return Http
      */
-    public function url(string|Uri $url, array $maps = [], mixed $func = null, bool $verifySSL = false) {
+    public function url(string|Uri $url, array $maps = [],
+                        mixed $func = null, bool $verifySSL = false): static {
         if (!empty($url)) {
             $this->uri = !$url instanceof Uri ? new Uri((string)$url) : $url;
         }
@@ -129,7 +136,7 @@ class Http {
      * @param array $parameters
      * @return Http
      */
-    public function maps(array $maps, array $parameters = []) {
+    public function maps(array $maps, array $parameters = []): static {
         // 更改请求方式
         if ($this->method == self::GET) {
             $this->method = self::POST;
@@ -144,7 +151,7 @@ class Http {
      * @param array $maps
      * @return Http
      */
-    public function appendMaps(array $maps) {
+    public function appendMaps(array $maps): static {
         $this->formMaps = array_merge($this->formMaps, $maps);
         return $this;
     }
@@ -154,7 +161,7 @@ class Http {
      * @param mixed $parameters
      * @return Http
      */
-    public function parameters(mixed $parameters) {
+    public function parameters(mixed $parameters): static {
         if (empty($parameters)) {
             return $this;
         }
@@ -170,7 +177,7 @@ class Http {
      * @param bool $is_clear 清空原有的d
      * @return Http
      */
-    public function encode(string|callable $func = self::JSON, bool $is_clear = false) {
+    public function encode(string|callable $func = self::JSON, bool $is_clear = false): static {
         if ($is_clear) {
             $this->encodeFunc = [];
         }
@@ -183,7 +190,7 @@ class Http {
      * @param string $method
      * @return Http
      */
-    public function method(string $method = self::GET) {
+    public function method(string $method = self::GET): static {
         $this->method = strtolower($method);
         return $this;
     }
@@ -195,7 +202,7 @@ class Http {
      * @param mixed $callback
      * @return Http
      */
-    public function progress(mixed $callback) {
+    public function progress(mixed $callback): static {
         $this->setOption(CURLOPT_PROGRESSFUNCTION, $callback);
         $this->setOption(CURLOPT_NOPROGRESS, false);
         return $this;
@@ -207,7 +214,7 @@ class Http {
      * @param null $value
      * @return Http
      */
-    public function cookie(string|array $key, mixed $value = null) {
+    public function cookie(string|array $key, mixed $value = null): static {
         if (is_string($key) && str_starts_with($key, '@')
             && is_file(substr($key, 1))) {
             return $this->setCookieFile(substr($key, 1));
@@ -227,7 +234,7 @@ class Http {
      * @param null $value
      * @return Http
      */
-    public function header(string|array $key, mixed $value = null) {
+    public function header(string|array $key, mixed $value = null): static {
         if (is_array($key)) {
             return $this->setHeader($key);
         }
@@ -344,6 +351,39 @@ class Http {
     }
 
     /**
+     * 只获取响应头，不获取内容
+     * @return array
+     * @throws Exception
+     */
+    public function getHeaders(): array {
+        return $this->setHeaderOption(true)
+            ->setNoBody()
+            ->setOption(CURLOPT_RETURNTRANSFER, true) // 返回不直接输出
+            ->setOption(CURLOPT_FOLLOWLOCATION, $this->allowAutoRedirect)  // 允许重定向
+            ->setOption(CURLOPT_AUTOREFERER, true)
+            ->decode(function ($content) {
+                if (empty($content)) {
+                    return [];
+                }
+                $items = [];
+                foreach (explode("\n", $content) as $line) {
+                    $line = trim($line);
+                    if (empty($line)) {
+                        continue;
+                    }
+                    $args = explode(':', $line, 2);
+                    if (count($args) === 1) {
+                        $items[] = $line;
+                        continue;
+                    }
+                    $items[trim($args[0])] = trim($args[1]);
+                }
+                return $items;
+            }, true)
+            ->execute();
+    }
+
+    /**
      * 显示
      * @return mixed|null
      * @throws \Exception
@@ -358,7 +398,7 @@ class Http {
      * @param bool $is_clear 清空原有的
      * @return $this
      */
-    public function decode(string|callable $func = null, bool $is_clear = false) {
+    public function decode(string|callable $func = null, bool $is_clear = false): static {
         if ($is_clear) {
             $this->decodeFunc = [];
         }
@@ -417,7 +457,7 @@ class Http {
      * @param string|null $key
      * @return array|string|null
      */
-    public function getResponseHeader(?string $key = null): array|string|null {
+    public function getResponseHeader(?string $key = null): mixed {
         if (empty($key)) {
             return $this->responseHeaders;
         }
@@ -428,8 +468,8 @@ class Http {
      * GET STATUS
      * @return mixed
      */
-    public function getStatusCode(): string|int {
-        return $this->responseHeaders['http_code'];
+    public function getStatusCode(): int {
+        return (int)$this->getResponseHeader('http_code');
     }
 
     /**
@@ -441,7 +481,7 @@ class Http {
     }
 
     /**
-     * @return resource
+     * @return \CurlHandle
      */
     public function getHandle() {
         return $this->curl;
@@ -460,7 +500,7 @@ class Http {
         return $this->responseText;
     }
 
-    public function setHeaderOption(bool $hasHeader = false) {
+    public function setHeaderOption(bool $hasHeader = false): static {
         return $this->setOption(CURLOPT_HEADER, $hasHeader);   // 是否输出包含头部
     }
 
@@ -468,7 +508,7 @@ class Http {
      * @param bool $isMulti
      * @return Http
      */
-    public function setIsMulti(bool $isMulti = true) {
+    public function setIsMulti(bool $isMulti = true): static {
         $this->isMulti = $isMulti;
         return $this;
     }
@@ -477,11 +517,11 @@ class Http {
      * SET COMMON OPTION
      * @return $this
      */
-    public function setCommonOption() {
+    public function setCommonOption(): static {
         return $this->setHeaderOption()
-            ->setOption(CURLOPT_RETURNTRANSFER, 1) // 返回不直接输出
-            ->setOption(CURLOPT_FOLLOWLOCATION, 1)  // 允许重定向
-            ->setOption(CURLOPT_AUTOREFERER, 1);  // 自动设置 referrer
+            ->setOption(CURLOPT_RETURNTRANSFER, true) // 返回不直接输出
+            ->setOption(CURLOPT_FOLLOWLOCATION, $this->allowAutoRedirect)  // 允许重定向
+            ->setOption(CURLOPT_AUTOREFERER, true);  // 自动设置 referrer
     }
 
     /**
@@ -492,7 +532,8 @@ class Http {
      * @param string|null $pwd
      * @return $this|Http
      */
-    public function setProxy(string $host, string|int|null $port = null, ?string $user = null, ?string $pwd = null) {
+    public function setProxy(string $host, string|int|null $port = null,
+                             ?string $user = null, ?string $pwd = null): static {
         $this->setOption(CURLOPT_PROXY, $host);
         if (!empty($port)) {
             $this->setOption(CURLOPT_PROXYPORT, $port);
@@ -509,8 +550,18 @@ class Http {
      * @param string $args
      * @return Http
      */
-    public function setUserAgent(string $args) {
+    public function setUserAgent(string $args): static {
         return $this->setOption(CURLOPT_USERAGENT, $args);
+    }
+
+    /**
+     * 是否重定向
+     * @param bool $allowAutoRedirect
+     * @return $this
+     */
+    public function setAllowAutoRedirect(bool $allowAutoRedirect): static {
+        $this->allowAutoRedirect = $allowAutoRedirect;
+        return $this;
     }
 
     /**
@@ -518,7 +569,7 @@ class Http {
      * @param string|Uri $url
      * @return Http
      */
-    public function setReferrer(string|Uri $url) {
+    public function setReferrer(string|Uri $url): static {
         return $this->setOption(CURLOPT_REFERER, (string)$url);
     }
 
@@ -526,7 +577,7 @@ class Http {
      * NOT OUTPUT BODY
      * @return Http
      */
-    public function setNoBody() {
+    public function setNoBody(): static {
         return $this->setOption(CURLOPT_NOBODY, true);
     }
 
@@ -535,7 +586,7 @@ class Http {
      * @param string|array $cookie
      * @return Http
      */
-    public function setCookie(string|array $cookie) {
+    public function setCookie(string|array $cookie): static {
         if (empty($cookie)) {
             return $this;
         }
@@ -550,7 +601,7 @@ class Http {
      * @param string|File $file
      * @return $this
      */
-    public function setCookieFile(mixed $file) {
+    public function setCookieFile(mixed $file): static {
         $file = (string)$file;
         return $this->setOption(CURLOPT_COOKIEJAR, $file)
             ->setOption(CURLOPT_COOKIEFILE, $file);
@@ -584,7 +635,7 @@ class Http {
      * @param mixed $value
      * @return $this
      */
-    public function setOption(array|string|int $option, mixed $value = null) {
+    public function setOption(array|string|int $option, mixed $value = null): static {
         if (is_array($option)) {
             curl_setopt_array($this->curl, $option);
         } else {
@@ -597,7 +648,7 @@ class Http {
      * CLOSE
      * @return $this
      */
-    public function close() {
+    public function close(): static {
         if (is_resource($this->curl)) {
             curl_close($this->curl);
         }
@@ -687,11 +738,11 @@ class Http {
             if (!is_null($func)) {
                 continue;
             }
-            if (preg_match($this->_jsonPattern, $this->getContentType())) {
+            if (preg_match(static::JsonPattern, $this->getContentType())) {
                 $data = Json::decode($data);
                 continue;
             }
-            if (preg_match($this->_xmlPattern, $this->getContentType())) {
+            if (preg_match(static::XmlPattern, $this->getContentType())) {
                 $data = Xml::decode($data);
                 continue;
             }

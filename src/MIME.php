@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 namespace Zodream\Http;
 
 class MIME {
@@ -108,5 +109,62 @@ class MIME {
      */
     public static function get(string $extension): string {
         return static::EXTENSION_MIME_MAPS[$extension] ?? $extension;
+    }
+
+    /**
+     * 根据文件类型获取文件拓展名
+     * @param string $type
+     * @return string
+     */
+    public static function extension(string $type): string {
+        $i = strpos($type, ';');
+        if ($i !== false) {
+            $type = substr($type, 0, $i);
+        }
+        $key = array_search($type, static::EXTENSION_MIME_MAPS, true);
+        if (!empty($key)) {
+            return $key;
+        }
+        $args = explode('/', $type);
+        return count($args) > 1 ? $args[1] : $args[0];
+    }
+
+    /**
+     * 判断 MIME 是否符合
+     * @param string $input 文件的 mime
+     * @param string $needle 允许的 mime, 可以多个  image/*;video/*;text/xml
+     * @return bool
+     */
+    public static function is(string $input, string $needle): bool {
+        if ($needle === '*/*' || $needle === '*' || empty($needle)) {
+            return true;
+        }
+        if (str_starts_with($input, '.')) {
+            $input = substr($input, 1);
+        }
+        if (!str_contains($input, '/')) {
+            $input = static::get(strtolower($input));
+        }
+        if ($input === $needle) {
+            return true;
+        }
+        foreach (explode(';', $needle) as $item) {
+            $item = trim($item);
+            if ($input === $item) {
+                return true;
+            }
+            $i = strpos($item, '*');
+            if ($i === false) {
+                continue;
+            }
+            if ($i > 0 && !str_starts_with($input, substr($item, 0, $i))) {
+                continue;
+            }
+            if ($i < strlen($item) - 1 && !str_ends_with($input, substr($item, $i + 1))) {
+                continue;
+            }
+            return true;
+        }
+        return false;
     }
 }

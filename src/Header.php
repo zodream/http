@@ -41,7 +41,7 @@ class Header implements IteratorAggregate {
         string $path = '/',
         string $domain = '',
         bool $secure = false,
-        bool $httpOnly = true) {
+        bool $httpOnly = true): static {
         if (!$cookie instanceof Cookie) {
             $cookie = new Cookie(
                 $cookie,
@@ -57,7 +57,7 @@ class Header implements IteratorAggregate {
         return $this;
     }
 
-    public function removeCookie(string $name, string $path = '/', string $domain = '') {
+    public function removeCookie(string $name, string $path = '/', string $domain = ''): static {
         if (null === $path) {
             $path = '/';
         }
@@ -116,7 +116,7 @@ class Header implements IteratorAggregate {
      */
     public function clearCookie(string $name,
                                 string $path = '/', string $domain = '',
-                                bool $secure = false, bool $httpOnly = true) {
+                                bool $secure = false, bool $httpOnly = true): static {
         return $this->setCookie(new Cookie($name, null, 1, $path, $domain, $secure, $httpOnly));
     }
 
@@ -157,7 +157,7 @@ class Header implements IteratorAggregate {
         return array_keys($this->headers);
     }
 
-    public function replace(array $headers = array()) {
+    public function replace(array $headers = array()): static {
         $this->headers = array();
         return $this->add($headers);
     }
@@ -168,14 +168,14 @@ class Header implements IteratorAggregate {
      * @param array $headers An array of HTTP headers
      * @return $this
      */
-    public function add(array $headers) {
+    public function add(array $headers): static {
         foreach ($headers as $key => $values) {
             $this->set($key, $values);
         }
         return $this;
     }
 
-    public function get(string $key, mixed $default = null, bool $first = true) {
+    public function get(string $key, mixed $default = null, bool $first = true): mixed {
         $key = $this->filterKey($key);
 
         if (!array_key_exists($key, $this->headers)) {
@@ -193,7 +193,7 @@ class Header implements IteratorAggregate {
         return $this->headers[$key];
     }
 
-    public function set(string $key, mixed $values, bool $replace = true) {
+    public function set(string $key, mixed $values, bool $replace = true): static {
         $key = $this->filterKey($key);
 
         $values = array_values((array) $values);
@@ -219,7 +219,7 @@ class Header implements IteratorAggregate {
         return array_key_exists(str_replace('_', '-', strtolower($key)), $this->headers);
     }
 
-    public function delete(string $tag) {
+    public function delete(string $tag): static {
         $tag = str_replace('_', '-', strtolower($tag));
         unset($this->headers[$tag]);
         if ('cache-control' === $tag) {
@@ -238,7 +238,7 @@ class Header implements IteratorAggregate {
         return $cacheControl;
     }
 
-    public function setRedirect(string $url, int $time = 0) {
+    public function setRedirect(string $url, int $time = 0): static {
         if (empty($url)) {
             return $this;
         }
@@ -248,7 +248,7 @@ class Header implements IteratorAggregate {
         return $this->set('Refresh', $time.';url='.$url);
     }
 
-    public function setXPoweredBy(string $name = 'PHP/8.0') {
+    public function setXPoweredBy(string $name = 'PHP/8.0'): static {
         return $this->set('X-Powered-By', $name);
     }
 
@@ -257,11 +257,11 @@ class Header implements IteratorAggregate {
      * @param string $name
      * @return Header
      */
-    public function setServer(string $name = 'Apache') {
+    public function setServer(string $name = 'Apache'): static {
         return $this->set('Server', $name);
     }
 
-    public function setContentLanguage(string $language = 'zh-CN') {
+    public function setContentLanguage(string $language = 'zh-CN'): static {
         return $this->set('Content-language', $language);
     }
 
@@ -270,7 +270,7 @@ class Header implements IteratorAggregate {
      * @param string $md5
      * @return Header
      */
-    public function setContentMD5(string $md5) {
+    public function setContentMD5(string $md5): static {
         return $this->set('Content-MD5', $md5);
     }
 
@@ -280,7 +280,7 @@ class Header implements IteratorAggregate {
      * @return Header
      */
     public function setCacheControl(
-        string $option = 'no-cache, no-store, max-age=0, must-revalidate') {
+        string $option = 'no-cache, no-store, max-age=0, must-revalidate'): static {
         return $this->set('Cache-Control', $option);
     }
 
@@ -289,7 +289,7 @@ class Header implements IteratorAggregate {
      * @param string $option
      * @return Header
      */
-    public function setPragma(string $option) {
+    public function setPragma(string $option): static {
         return $this->set('Pragma', $option);
     }
 
@@ -298,7 +298,7 @@ class Header implements IteratorAggregate {
      * @param integer $time
      * @return Header
      */
-    public function setRetryAfter(int $time) {
+    public function setRetryAfter(int $time): static {
         return $this->set('Retry-After', $time);
     }
 
@@ -307,7 +307,7 @@ class Header implements IteratorAggregate {
      * @param integer $time
      * @return Header
      */
-    public function setDate(int $time) {
+    public function setDate(int $time): static {
         return $this->set('Date', gmdate('D, d M Y H:i:s', $time).' GMT');
     }
 
@@ -316,7 +316,7 @@ class Header implements IteratorAggregate {
      * @param integer $time
      * @return Header
      */
-    public function setExpires(int $time) {
+    public function setExpires(int $time): static {
         return $this->set('Expires', gmdate('D, d M Y H:i:s', $time).' GMT');
     }
 
@@ -325,7 +325,7 @@ class Header implements IteratorAggregate {
      * @param integer $time
      * @return Header
      */
-    public function setLastModified(int $time) {
+    public function setLastModified(int $time): static {
         return $this->set('Last-Modified', gmdate('D, d M Y H:i:s', $time).' GMT');
     }
 
@@ -334,7 +334,7 @@ class Header implements IteratorAggregate {
      * @param int|string $length
      * @return Header
      */
-    public function setContentLength(int|string $length) {
+    public function setContentLength(int|string $length): static {
         return $this->set('Content-Length', $length);
     }
 
@@ -344,7 +344,7 @@ class Header implements IteratorAggregate {
      * @param string $type
      * @return Header
      */
-    public function setContentRange(string|int $length, string $type = 'bytes') {
+    public function setContentRange(string|int $length, string $type = 'bytes'): static {
         return $this->set('Content-Range', $type.' '.$length);
     }
 
@@ -353,7 +353,7 @@ class Header implements IteratorAggregate {
      * @param string $type
      * @return Header
      */
-    public function setAcceptRanges(string $type = 'bytes') {
+    public function setAcceptRanges(string $type = 'bytes'): static {
         return $this->set('Accept-Ranges', $type);
     }
 
@@ -363,7 +363,7 @@ class Header implements IteratorAggregate {
      * @return Header
      * @throws \Exception
      */
-    public function setContentDisposition(string $filename) {
+    public function setContentDisposition(string $filename): static {
         if (str_contains(app('request')->server('HTTP_USER_AGENT', ''), 'MSIE')) {     //如果是IE浏览器
             $filename = preg_replace('/\./', '%2e', $filename, substr_count($filename, '.') - 1);
         }
@@ -380,7 +380,7 @@ class Header implements IteratorAggregate {
      */
     public function setWWWAuthenticate(string $realm, string $qop = 'auth',
                                        string $nonce = '',
-                                       string $opaque = '') {
+                                       string $opaque = ''): static {
         if (empty($nonce) && empty($opaque)) {
             $content = sprintf('Basic realm="%s"', $realm);
         } else {
@@ -395,7 +395,7 @@ class Header implements IteratorAggregate {
      * @param string $encoding
      * @return Header
      */
-    public function setTransferEncoding(string $encoding = 'chunked') {
+    public function setTransferEncoding(string $encoding = 'chunked'): static {
         return $this->set('Transfer-Encoding', $encoding);
     }
 
@@ -415,7 +415,7 @@ class Header implements IteratorAggregate {
         int $maxAge = 0,
         mixed $supportsCredentials = false,
         string $exposeHeaders = 'Content-Disposition',
-    ) {
+    ): static {
         return $this->add([
             'Access-Control-Allow-Origin' => $allowedOrigins,
             'Access-Control-Allow-Credentials' => $supportsCredentials,
@@ -428,16 +428,16 @@ class Header implements IteratorAggregate {
 
     /**
      * HTTP2 server push
-     * @param $url
-     * @param $as
-     * @param null $type
-     * @param bool $crossorigin
-     * @param bool $nopush
+     * @param string $url
+     * @param string $as
+     * @param string|null $type
+     * @param bool $crossOrigin
+     * @param bool $noPush
      * @return Header
      */
     public function setLink(string $url,
                             string $as, ?string $type = null,
-                            bool $crossorigin = false, bool $nopush = false) {
+                            bool $crossOrigin = false, bool $noPush = false): static {
         $args = [
             sprintf('<%s>', $url),
             'rel=preload',
@@ -446,10 +446,10 @@ class Header implements IteratorAggregate {
         if (!empty($type)) {
             $args[] = 'type='.$type;
         }
-        if ($crossorigin) {
+        if ($crossOrigin) {
             $args[] = 'crossorigin';
         }
-        if ($nopush) {
+        if ($noPush) {
             $args[] = 'nopush';
         }
         return $this->set('Link', implode('; ', $args), false);
@@ -461,9 +461,9 @@ class Header implements IteratorAggregate {
      * @param string $option
      * @return Header
      */
-    public function setContentType(string $type = 'html', string $option = 'utf-8') {
+    public function setContentType(string $type = 'html', string $option = 'utf-8'): static {
         $type = strtolower($type);
-        if ($type == 'image' || $type == 'img') {
+        if ($type === 'image' || $type === 'img') {
             return $this->set('Content-Type', 'image/'.$option);
         }
         $content = MIME::get($type);
@@ -484,7 +484,7 @@ class Header implements IteratorAggregate {
         return new ArrayIterator($this->all());
     }
 
-    public function parse($args) {
+    public function parse($args): static {
         return $this->replace($args);
     }
 
