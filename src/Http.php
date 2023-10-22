@@ -121,12 +121,19 @@ class Http {
      */
     public function url(string|Uri $url, array $maps = [],
                         mixed $func = null, bool $verifySSL = false): static {
-        if (!empty($url)) {
+        if (!empty($url) && is_string($url) && !str_contains($url, '://') && !empty($this->uri)) {
+            $this->uri->addPath($url);
+        } elseif (!empty($url)) {
             $this->uri = !$url instanceof Uri ? new Uri((string)$url) : $url;
         }
         $this->uriMaps = $maps;
         $this->uriEncodeFunc = $func;
         $this->verifySSL = $verifySSL;
+        return $this;
+    }
+
+    public function queriesMap(array $maps = []): static {
+        $this->uriMaps = $maps;
         return $this;
     }
 
@@ -138,7 +145,7 @@ class Http {
      */
     public function maps(array $maps, array $parameters = []): static {
         // 更改请求方式
-        if ($this->method == self::GET) {
+        if ($this->method === self::GET) {
             $this->method = self::POST;
         }
         $this->parameters($parameters);
