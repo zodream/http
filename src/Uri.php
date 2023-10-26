@@ -139,6 +139,25 @@ class Uri {
     }
 
     /**
+     * 追加路径，不判断 ..
+     * @param string $path
+     * @return $this
+     */
+    public function appendPath(string $path): static {
+        $path = trim($path, '/');
+        if ($path === '') {
+            return $this;
+        }
+        $base = trim($this->path, '/');
+        if ($base === '') {
+            $this->path = $path;
+            return $this;
+        }
+        $this->path = sprintf('%s/%s', $base, $path);
+        return $this;
+    }
+
+    /**
      * 追加路径，请注意清除原有查询
      * @param $path
      * @return Uri
@@ -154,13 +173,13 @@ class Uri {
         if (str_starts_with($src['path'], '/')) {
             return $this->setPath($src['path']);
         }
-        $path = dirname($this->path).'/'.$src['path'];
+        $path = $this->path.'/'.$src['path'];
         $rst = array();
         $path_array = explode('/', $path);
         if(!$path_array[0]) {
             $rst[] = '';
         }
-        foreach ($path_array AS $key => $dir) {
+        foreach ($path_array as $dir) {
             if ($dir == '..') {
                 if (end($rst) == '..') {
                     $rst[] = '..';
