@@ -64,6 +64,7 @@ class MIME {
         'phtml' => 'application/x-httpd-php',
         'plist' => 'application/xml',
         'png'   => 'image/png',
+        'webp' => 'image/webp',
         'ppt'   => 'application/powerpoint',
         'ps'    => 'application/postscript',
         'psd'   => 'application/x-photoshop',
