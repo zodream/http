@@ -13,9 +13,13 @@
         }
     ],
     "require": {
-        "php": ">=8.1",
-        "zodream/disk" : "^5.2",
-        "zodream/validate" : "^5.2"
+        "php": ">=8.2",
+        "zodream/disk" : "^5.3",
+        "zodream/validate" : "^5.3"
+    },
+    "suggest": {
+        "ext-curl": "*",
+        "ext-zlib": "*"
     },
     "autoload": {
         "psr-4": {
