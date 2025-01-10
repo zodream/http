@@ -436,7 +436,7 @@ class Header implements IteratorAggregate {
      * @return Header
      */
     public function setLink(string $url,
-                            string $as, ?string $type = null,
+                            string $as, string|null $type = null,
                             bool $crossOrigin = false, bool $noPush = false): static {
         $args = [
             sprintf('<%s>', $url),

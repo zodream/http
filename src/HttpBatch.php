@@ -134,7 +134,7 @@ class HttpBatch {
      * @param $curl
      * @return string|null
      */
-    public static function getHttpContent($curl): ?string {
+    public static function getHttpContent($curl): string|null {
         return curl_multi_getcontent($curl instanceof Http ? $curl->getHandle() : $curl);
     }
 

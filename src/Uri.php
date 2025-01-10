@@ -263,7 +263,7 @@ class Uri {
      * @param string $key
      * @return array|bool
      */
-    public function getData(?string $key = null): mixed {
+    public function getData(string|null $key = null): mixed {
         if (is_null($key)) {
             return $this->data;
         }

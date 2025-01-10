@@ -45,7 +45,7 @@ class Http {
     /**
      * @var Uri|null
      */
-    protected ?Uri  $uri = null;
+    protected Uri|null  $uri = null;
 
     /**
      * 网址参数地图
@@ -417,7 +417,7 @@ class Http {
      * 获取错误信息
      * @return string|null
      */
-    public function error(): ?string {
+    public function error(): string|null {
         return $this->responseHeaders['error'];
     }
 
@@ -464,7 +464,7 @@ class Http {
      * @param string|null $key
      * @return array|string|null
      */
-    public function getResponseHeader(?string $key = null): mixed {
+    public function getResponseHeader(string|null $key = null): mixed {
         if (empty($key)) {
             return $this->responseHeaders;
         }
@@ -540,7 +540,7 @@ class Http {
      * @return $this|Http
      */
     public function setProxy(string $host, string|int|null $port = null,
-                             ?string $user = null, ?string $pwd = null): static {
+                             string|null $user = null, string|null $pwd = null): static {
         $this->setOption(CURLOPT_PROXY, $host);
         if (!empty($port)) {
             $this->setOption(CURLOPT_PROXYPORT, $port);
@@ -937,7 +937,7 @@ class Http {
      * @param string|null $res
      * @return false|string
      */
-    public static function tryGzipDecode(?string $res): string|false {
+    public static function tryGzipDecode(string|null $res): string|false {
         if (empty($res) || strlen($res) < 2) {
             return $res;
         }
