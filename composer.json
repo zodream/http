@@ -13,9 +13,9 @@
         }
     ],
     "require": {
-        "php": ">=8.2",
-        "zodream/disk" : "^5.3",
-        "zodream/validate" : "^5.3"
+        "php": ">=8.5",
+        "zodream/disk" : "dev-master",
+        "zodream/validate" : "dev-master"
     },
     "suggest": {
         "ext-curl": "*",
