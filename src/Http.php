@@ -865,11 +865,11 @@ class Http {
      * @throws Exception
      */
     protected static function getParametersByKey(mixed $key, mixed $item, array $args): array {
-        if (is_array($item) && is_integer($key)) {
+        if (is_array($item) && is_int($key)) {
             // 多选多
             return static::chooseParameters($item, $args);
         }
-        if (is_integer($key)) {
+        if (is_int($key)) {
             list($key, $item) = [$item, null];
         }
         if (isset($args[$key])) {
