@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Zodream\Http;
 
-class MIME {
+final class MIME {
 
     const EXTENSION_MIME_MAPS = [
         'ai'    => 'application/postscript',

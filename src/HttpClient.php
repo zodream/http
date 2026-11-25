@@ -8,16 +8,18 @@ use Zodream\Helpers\Arr;
 use Zodream\Helpers\Json;
 use Zodream\Helpers\Xml;
 use Exception;
+use CurlHandle;
 use Zodream\Validate\Validator;
 
 /**
- * Class Http
+ * Class HttpClient
  * @package Zodream\Http
  */
-class Http {
+class HttpClient {
 
     const XML = 'xml';
     const JSON = 'json';
+
 
     const GET = 'get';
     const POST = 'post';
@@ -40,12 +42,12 @@ class Http {
     /**
      * @var \CurlHandle
      */
-    protected $curl;
+    protected CurlHandle|null $handle;
 
     /**
      * @var Uri|null
      */
-    protected Uri|null  $uri = null;
+    protected Uri|null $uri = null;
 
     /**
      * 网址参数地图
@@ -105,7 +107,11 @@ class Http {
      * @param null $url
      */
     public function __construct(mixed $url = null) {
-        $this->curl = curl_init();
+        $handle = curl_init();
+        if ($handle === false) {
+            throw new Exception('curl_init is error');
+        }
+        $this->handle = $handle;
         if (!empty($url)) {
             $this->url($url);
         }
@@ -117,7 +123,7 @@ class Http {
      * @param array $maps
      * @param null $func
      * @param bool $verifySSL
-     * @return Http
+     * @return static
      */
     public function url(string|Uri $url, array $maps = [],
                         mixed $func = null, bool $verifySSL = false): static {
@@ -141,7 +147,7 @@ class Http {
      * 根据参数自动转换
      * @param array $maps
      * @param array $parameters
-     * @return Http
+     * @return static
      */
     public function maps(array $maps, array $parameters = []): static {
         // 更改请求方式
@@ -156,7 +162,7 @@ class Http {
     /**
      * 追加转换地图
      * @param array $maps
-     * @return Http
+     * @return static
      */
     public function appendMaps(array $maps): static {
         $this->formMaps = array_merge($this->formMaps, $maps);
@@ -166,7 +172,7 @@ class Http {
     /**
      * 设置参数
      * @param mixed $parameters
-     * @return Http
+     * @return static
      */
     public function parameters(mixed $parameters): static {
         if (empty($parameters)) {
@@ -182,7 +188,7 @@ class Http {
      * 编码
      * @param string|callable $func
      * @param bool $is_clear 清空原有的d
-     * @return Http
+     * @return static
      */
     public function encode(string|callable $func = self::JSON, bool $is_clear = false): static {
         if ($is_clear) {
@@ -195,7 +201,7 @@ class Http {
     /**
      * 设置请求方法
      * @param string $method
-     * @return Http
+     * @return static
      */
     public function method(string $method = self::GET): static {
         $this->method = strtolower($method);
@@ -207,7 +213,7 @@ class Http {
      *
      * @access public
      * @param mixed $callback
-     * @return Http
+     * @return static
      */
     public function progress(mixed $callback): static {
         $this->setOption(CURLOPT_PROGRESSFUNCTION, $callback);
@@ -219,7 +225,7 @@ class Http {
      * 设置cookie
      * @param $key
      * @param null $value
-     * @return Http
+     * @return static
      */
     public function cookie(string|array $key, mixed $value = null): static {
         if (is_string($key) && str_starts_with($key, '@')
@@ -239,7 +245,7 @@ class Http {
      * 设置请求头
      * @param string|array $key
      * @param null $value
-     * @return Http
+     * @return static
      */
     public function header(string|array $key, mixed $value = null): static {
         if (is_array($key)) {
@@ -405,7 +411,7 @@ class Http {
      * @param bool $is_clear 清空原有的
      * @return $this
      */
-    public function decode(string|callable $func = null, bool $is_clear = false): static {
+    public function decode(string|callable|null $func = null, bool $is_clear = false): static {
         if ($is_clear) {
             $this->decodeFunc = [];
         }
@@ -431,7 +437,7 @@ class Http {
             return null;
         }
         $this->applyMethod();
-        $this->responseText = curl_exec($this->curl);
+        $this->responseText = curl_exec($this->handle);
         self::log('HTTP RESPONSE: '.$this->responseText);
         return $this->parseResponse();
     }
@@ -441,7 +447,7 @@ class Http {
      * @throws Exception
      */
     public function executeWithBatch(): mixed {
-        $this->responseText = HttpBatch::getHttpContent($this->curl);
+        $this->responseText = HttpBatch::getHttpContent($this->handle);
         self::log('HTTP RESPONSE: '.$this->responseText);
         return $this->parseResponse();
     }
@@ -451,9 +457,9 @@ class Http {
      * @throws Exception
      */
     protected function parseResponse(): mixed {
-        $this->responseHeaders = curl_getinfo($this->curl);
-        $this->responseHeaders['error'] = curl_error($this->curl);
-        $this->responseHeaders['errorNo'] = curl_errno($this->curl);
+        $this->responseHeaders = curl_getinfo($this->handle);
+        $this->responseHeaders['error'] = curl_error($this->handle);
+        $this->responseHeaders['errorNo'] = curl_errno($this->handle);
         if ($this->responseText === false) {
             throw new \Exception($this->responseHeaders['error']);
         }
@@ -488,10 +494,10 @@ class Http {
     }
 
     /**
-     * @return \CurlHandle
+     * @return CurlHandle|null
      */
-    public function getHandle() {
-        return $this->curl;
+    public function getHandle(): CurlHandle|null {
+        return $this->handle;
     }
 
     /**
@@ -500,7 +506,7 @@ class Http {
      * @throws \Exception
      */
     public function getResponseText() {
-        if (!empty($this->curl)
+        if (!empty($this->handle)
             && is_null($this->responseText)) {
             return $this->execute();
         }
@@ -513,7 +519,7 @@ class Http {
 
     /**
      * @param bool $isMulti
-     * @return Http
+     * @return static
      */
     public function setIsMulti(bool $isMulti = true): static {
         $this->isMulti = $isMulti;
@@ -537,7 +543,7 @@ class Http {
      * @param string|int|null $port
      * @param string|null $user
      * @param string|null $pwd
-     * @return $this|Http
+     * @return static
      */
     public function setProxy(string $host, string|int|null $port = null,
                              string|null $user = null, string|null $pwd = null): static {
@@ -555,7 +561,7 @@ class Http {
     /**
      * SET USER AGENT
      * @param string $args
-     * @return Http
+     * @return static
      */
     public function setUserAgent(string $args): static {
         return $this->setOption(CURLOPT_USERAGENT, $args);
@@ -574,7 +580,7 @@ class Http {
     /**
      * SET REFERRER URL
      * @param string|Uri $url
-     * @return Http
+     * @return static
      */
     public function setReferrer(string|Uri $url): static {
         return $this->setOption(CURLOPT_REFERER, (string)$url);
@@ -582,7 +588,7 @@ class Http {
 
     /**
      * NOT OUTPUT BODY
-     * @return Http
+     * @return static
      */
     public function setNoBody(): static {
         return $this->setOption(CURLOPT_NOBODY, true);
@@ -591,7 +597,7 @@ class Http {
     /**
      * SET COOKIE
      * @param string|array $cookie
-     * @return Http
+     * @return static
      */
     public function setCookie(string|array $cookie): static {
         if (empty($cookie)) {
@@ -606,7 +612,7 @@ class Http {
     /**
      * SET COOKIE FILE
      * @param string|File $file
-     * @return $this
+     * @return static
      */
     public function setCookieFile(mixed $file): static {
         $file = (string)$file;
@@ -617,7 +623,7 @@ class Http {
     /**
      * SET HEADER
      * @param array $args
-     * @return $this
+     * @return static
      */
     public function setHeader(array $args) {
         $header = [];
@@ -640,33 +646,34 @@ class Http {
     /**
      * @param array|string|int $option
      * @param mixed $value
-     * @return $this
+     * @return static
      */
     public function setOption(array|string|int $option, mixed $value = null): static {
         if (is_array($option)) {
-            curl_setopt_array($this->curl, $option);
+            curl_setopt_array($this->handle, $option);
         } else {
-            curl_setopt($this->curl, intval($option), $value);
+            curl_setopt($this->handle, intval($option), $value);
         }
         return $this;
     }
 
     /**
      * CLOSE
-     * @return $this
+     * @return static
      */
     public function close(): static {
-        if (is_resource($this->curl)) {
-            curl_close($this->curl);
-        }
+        // if (is_resource($this->handle)) {
+        //     curl_close($this->handle);
+        // }
+        $this->handle = null;
         return $this;
     }
 
-    public function __destruct() {
-        if (is_resource($this->curl)) {
-            $this->close();
-        }
-    }
+    // public function __destruct() {
+    //     if (is_resource($this->handle)) {
+    //         $this->close();
+    //     }
+    // }
 
     public function getPostSource(): mixed {
         if (!is_array($this->parameters)) {

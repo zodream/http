@@ -2,13 +2,15 @@
 declare(strict_types=1);
 namespace Zodream\Http;
 
+use CurlMultiHandle;
+use CurlHandle;
 
-class HttpBatch {
+class HttpBatchClient {
 
     /**
-     * @var resource
+     * @var CurlMultiHandle
      */
-    protected $handle;
+    protected CurlMultiHandle $handle;
 
     protected array $https = [];
 
@@ -26,9 +28,14 @@ class HttpBatch {
 
     public function addHttp(mixed ...$https) {
         foreach ($https as $http) {
-            if ($http instanceof Http) {
+            if ($http instanceof HttpClient) {
                 $this->addHandle($http->getHandle());
                 $this->https[] = $http->setIsMulti(true);
+                continue;
+            }
+            if ($http instanceof CurlHandle) {
+                $this->addHandle($http);
+                $this->https[] = $http;
                 continue;
             }
             if (is_resource($http)) {
@@ -45,21 +52,21 @@ class HttpBatch {
     }
 
     /**
-     * @param resource|Http $curl
+     * @param CurlHandle|HttpClient $curl
      * @return bool
      */
-    protected function addHandle(mixed $curl) {
+    protected function addHandle(CurlHandle|HttpClient $curl) {
         return curl_multi_add_handle($this->handle,
-                $curl instanceof Http ? $curl->getHandle() : $curl) === CURLM_OK;
+                $curl instanceof HttpClient ? $curl->getHandle() : $curl) === CURLM_OK;
     }
 
     /**
-     * @param resource|Http $curl
+     * @param CurlHandle|HttpClient $curl
      * @return int
      */
-    public function removeHandle(mixed $curl) {
+    public function removeHandle(CurlHandle|HttpClient $curl) {
         return curl_multi_remove_handle($this->handle,
-            $curl instanceof Http ? $curl->getHandle() : $curl);
+            $curl instanceof HttpClient ? $curl->getHandle() : $curl);
     }
 
     /**
@@ -73,7 +80,7 @@ class HttpBatch {
         }
         // 应用参数
         foreach ($this->https as $http) {
-            if ($http instanceof Http) {
+            if ($http instanceof HttpClient) {
                 $http->applyMethod();
             }
         }
@@ -95,7 +102,7 @@ class HttpBatch {
         //Clean to re-exec && check success
         $success = true;
         foreach ($this->https as $http) {
-            if (!$http instanceof Http) {
+            if (!$http instanceof HttpClient) {
                 continue;
             }
             $http->executeWithBatch();
@@ -134,8 +141,8 @@ class HttpBatch {
      * @param $curl
      * @return string|null
      */
-    public static function getHttpContent($curl): string|null {
-        return curl_multi_getcontent($curl instanceof Http ? $curl->getHandle() : $curl);
+    public static function getHttpContent(CurlHandle|HttpClient $curl): string|null {
+        return curl_multi_getcontent($curl instanceof HttpClient ? $curl->getHandle() : $curl);
     }
 
 }
