@@ -238,7 +238,7 @@ class Header implements IteratorAggregate {
         return $cacheControl;
     }
 
-    public function setRedirect(string $url, int $time = 0): static {
+    public function setRedirect(string|Uri|null $url, int $time = 0): static {
         if (empty($url)) {
             return $this;
         }
@@ -484,7 +484,7 @@ class Header implements IteratorAggregate {
         return new ArrayIterator($this->all());
     }
 
-    public function parse($args): static {
+    public function parse(array $args): static {
         return $this->replace($args);
     }
 
